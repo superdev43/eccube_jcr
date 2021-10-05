@@ -1,0 +1,124 @@
+{# This file is part of BannerManagement4
+
+Copyright(c) U-Mebius Inc. All Rights Reserved.
+
+https://umebius.com/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends '@admin/default_frame.twig' %}
+
+{% set menus = ['content', 'banner'] %}
+
+{% block title %}コンテンツ管理{% endblock %}
+{% block sub_title %}キービジュアル管理{% endblock %}
+
+{% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}
+
+{% block stylesheet %}
+{% endblock stylesheet %}
+
+{% block javascript %}
+<script src="{{ asset('assets/js/vendor/moment.min.js', 'admin') }}"></script>
+<script src="{{ asset('assets/js/vendor/moment-js.js', 'admin') }}"></script>
+<script src="{{ asset('assets/js/vendor/tempusdominus-bootstrap-4.min.js', 'admin') }}"></script>
+<script>
+$(function() {
+
+
+});
+</script>
+{% endblock javascript %}
+
+{% block main %}
+    <form role="form" class="form-horizontal" name="form1" id="form1"
+          method="post" action="" enctype="multipart/form-data">
+        <div class="c-contentsArea__cols">
+            <div class="c-contentsArea__primaryCol">
+                <div class="c-primaryCol">
+                    <div class="card rounded border-0 mb-4">
+                        <div class="card-body p-0">
+                            <div class="card rounded border-0">
+
+                                <div class="card-header">
+                                    <span>バナー登録・編集</span>
+                                </div>
+
+                                <div id="ex-csv_product-upload" class="card-body">
+
+                                    <div id="detail_box__body" class="box-body">
+
+                                        {{ form_row(form._token) }}
+                                        {{ form_row(form.file) }}
+
+
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label required" for="admin_banner_alt"></label>
+                                            <div class="col-sm-10">
+                                                {% if Banner.file_name %}
+                                                    <img src="{{ asset('banner/'~Banner.file_name, 'save_image') }}" width="200">
+                                                {% endif %}
+                                                {{ form_widget(form.file_name) }}
+                                                {{ form_errors(form.file_name) }}
+                                            </div>
+                                        </div>
+
+                                        {{ form_row(form.alt) }}
+
+                                        {{ form_row(form.url) }}
+
+                                        {{ form_row(form.link_method) }}
+                                        {{ form_row(form.Field) }}
+
+                                        {#{{ form_row(form.title) }}#}
+
+                                        {#{{ form_row(form.comment) }}#}
+
+                                        {#{{ form_row(form.select) }}#}
+
+                                        <div class="extra-form">
+                                            {% for f in form.getIterator %}
+                                                {% if f.vars.name matches '[^plg*]' %}
+                                                    {{ form_row(f) }}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+
+                                    </div><!-- /.box-body -->
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="c-conversionArea">
+        <div class="c-conversionArea__container">
+            <div class="row justify-content-between align-items-center">
+                <div class="col-6">
+                    <div class="c-conversionArea__leftBlockItem">
+                        <a class="c-baseLink" href="{{ url('admin_content_banner') }}">
+                            <i class="fa fa-backward" aria-hidden="true"></i>
+                            <span>バナー一覧</span></a>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div id="ex-conversion-action" class="row align-items-center justify-content-end">
+                        <div class="col-auto">
+                            {#{{ form_widget(form.visible) }}#}
+                            {#{{ form_errors(form.visible) }}#}
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-ec-conversion px-5" type="submit">{{ 'admin.common.registration'|trans }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% set Categories = repository('Eccube\\Entity\\Category').getList() %}
+
+{% macro tree(Category) %}
+    {% from _self import tree %}
+    <a href="{{ url('product_list') }}?category_id={{ Category.id }}">
+        {{ Category.name }}
+    </a>
+    {% if Category.children|length > 0 %}
+        <ul>
+            {% for ChildCategory in Category.children %}
+                <li>
+                    {{ tree(ChildCategory) }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
+
+{% macro tree1(Tag) %}
+    {% from _self import tree1 %}
+    <a href="{{ url('product_list') }}?tag={{ Tag.id }}">
+        {{ Tag.name }}
+    </a>
+{% endmacro %}
+
+{% macro tree2(Tag) %}
+    {% from _self import tree2 %}
+    <a href="{{ url('product_list') }}?price_range={{ Tag }}">
+        {{ Tag }}
+    </a>
+{% endmacro %}
+
+
+
+
+{% set Tags = repository('Eccube\\Entity\\Tag').getList() %}
+{% set PriceRanges = repository('Plugin\\TabaCustomFields\\Entity\\CustomFields').getPriceRange() %}
+{% set Pranges = PriceRanges[0].formOption|split('\r\n') %}
+
+{% set FirstRecommandProducts = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getFirstRecommandProducts() %}
+{% set RankProducts = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getRankProducts() %}
+{% set catProducts = repository('Eccube\\Entity\\ProductCategory').getCatProducts() %}
+{# {{ dump(catProducts) }} #}
+<div class="left-side">
+    <div class="left-category">
+        <dl>
+            <dt>お料理ジャンル</dt>
+            {# @see https://github.com/bolt/bolt/pull/2388 #}
+            {% from _self import tree %}
+            {% for Category in Categories %}
+                <dd>{{ tree(Category) }}</dd>
+            {% endfor %}
+        </dl>
+        <dl>
+            <dt>食材でさがす</dt>
+            {% from _self import tree1 %}
+            {% for Tag in Tags %}
+                <dd>{{ tree1(Tag) }}</dd>
+            {% endfor %}
+        </dl>
+        <dl class="has-num">
+            <dt>ランキング</dt>
+            {% for rankProductFields in RankProducts %}
+                {% set rankProduct = repository('Eccube\\Entity\\Product').getFirstProduct(rankProductFields.targetId) %}
+                <dd><a href="{{ url('product_list') }}?rank_id={{  rankProductFields.plgFieldContent1 }}"><span>{{ rankProductFields.plgFieldContent1 }}</span>{{rankProduct}}</a></dd>
+            {% endfor %}
+            {# <dd><a href="##"><span>1</span>大海老のトマトクリームパスタ</a></dd>
+            <dd><a href="##"><span>2</span>北海道海鮮しゃぶしゃぶ</a></dd>
+            <dd><a href="##"><span>3</span>毛蟹まるごと一杯あんかけチャーハン</a></dd>
+            <dd><a href="##"><span>4</span>「ズワイガニと鯛」北海道魚介たっぷりパエリア</a></dd>
+            <dd><a href="##"><span>5</span>オマール海老のチーズリゾット　ブッラータチーズ…</a></dd> #}
+        </dl>
+        <dl>
+            <dt>価格帯</dt>
+            {% from _self import tree2 %}
+            {% for Price in Pranges %}
+                <dd>{{ tree2(Price) }}</dd>
+            {% endfor %}
+        </dl>
+        <dl class="no-arrow">
+            <dt>おすすめ</dt>
+            {% for recommandProductFields in FirstRecommandProducts %}
+                {% set recommandProduct = repository('Eccube\\Entity\\Product').getFirstProduct(recommandProductFields.targetId) %}
+                <dd><a href="{{ url('product_list') }}?recommand_id={{  recommandProductFields.plgFieldContent8 }}">{{recommandProduct}}</a></dd>
+            {% endfor %}
+
+        </dl>
+        <dl class="no-arrow">
+            <dt>お試し料理</dt>
+            {% for catProductFields in catProducts %}
+                {% set catProduct = repository('Eccube\\Entity\\Product').getFirstProduct(catProductFields.product_id) %}
+                {# {{catProduct}}; #}
+                <dd><a href="{{ url('product_list') }}?category_id={{  catProductFields.category_id }}">{{catProduct}}</a></dd>
+            {% endfor %}
+
+            {# <dd><a href="##">北海道厚岸産蒸し牡蠣の彩り</a></dd> #}
+        </dl>
+    </div>
+    <div class="left-banner-box">
+        <div class="left-banner"><a href="##"><img src="/html/template/default/assets/img/top/img_hero_pc02.jpg"></a></div>
+        <div class="left-banner"><a href="##"><img src="/html/template/default/assets/img/top/img_hero_pc02.jpg"></a></div>
+        <div class="left-banner"><a href="##"><img src="/html/template/default/assets/img/top/img_hero_pc02.jpg"></a></div>
+        <div class="left-banner"><a href="##"><img src="/html/template/default/assets/img/top/img_hero_pc02.jpg"></a></div>
+    </div>
+</div>

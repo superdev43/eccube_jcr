@@ -1,0 +1,222 @@
+{#
+Plugin Name: JoolenPluginTemplateManager4
+
+Copyright(c) joolen inc. All Rights Reserved.
+
+https://www.joolen.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+
+{% extends '@admin/default_frame.twig' %}
+
+{% set menus = ['content', 'joolen_plugin_template_manager_menu'] %}
+{% block title %}{{ 'joolenplugintemplatemanager4.admin.template_manager'|trans }}{% endblock %}
+{% block sub_title %}{{ 'admin.content.contents_management' | trans }}{% endblock %}
+
+{% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        .ui-resizable-se {
+            right: -3px;
+            bottom: -3px;
+        }
+    </style>
+{% endblock stylesheet %}
+
+{% block javascript %}
+<script>var bootstrapTooltip = $.fn.tooltip.noConflict();</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ext-language_tools.js"></script>
+<script>
+    $.fn.tooltip = bootstrapTooltip;
+    $(function () {
+        $('#form_plugins').on('change', function () {
+            $('#form_mode').val('plugin_select');
+            $('#form1').submit();
+            return false;
+        });
+        $('#form_templates').on('change', function () {
+            $('#form_mode').val('template_select');
+            $('#form1').submit();
+            return false;
+        });
+        ace.require('ace/ext/language_tools');
+        let twig_editor = ace.edit('twig_editor');
+        twig_editor.session.setMode('ace/mode/twig');
+        twig_editor.setTheme('ace/theme/tomorrow');
+        twig_editor.setValue("{{ form.twig.vars.value|escape('js') }}");
+
+        {# MEMO: テンプレート未選択 または 選択肢がない場合はエディターを無効にして背景色を変える #}
+        twig_editor.setReadOnly({{ form.templates.vars.choices|length == 0 or form.templates.vars.value == "" ? true : false }} );
+        twig_editor.container.style.background= "{{ form.templates.vars.choices|length == 0 or form.templates.vars.value == "" ? '#e9e9e9' : '#fffff' }}";
+        twig_editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableSnippets: true,
+            enableLiveAutocompletion: true,
+            showInvisibles: true
+        });
+
+        let restore_twig_editor = ace.edit('restore_twig_editor');
+        restore_twig_editor.session.setMode('ace/mode/twig');
+        restore_twig_editor.setTheme('ace/theme/tomorrow');
+        restore_twig_editor.setValue("{{ form.restore_twig.vars.value|escape('js') }}");
+        restore_twig_editor.setReadOnly(true);
+        restore_twig_editor.container.style.background="#e9e9e9"
+        restore_twig_editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableSnippets: true,
+            enableLiveAutocompletion: true,
+            showInvisibles: true,
+        });
+
+        $("#twig_editor").resizable({
+            resize: function (event, ui) {
+                twig_editor.resize();
+            }
+        });
+
+        $("#restore_twig_editor").resizable({
+            resize: function (event, ui) {
+                restore_twig_editor.resize();
+            }
+        });
+
+        $('#submit_button').on('click', function() {
+            $('#form_mode').val('save');
+        });
+
+        $('#form1').on('submit', function () {
+            $('#form_twig').val(twig_editor.getValue());
+        });
+
+        // 初期コードをクリップボードへコピー
+        $('.action-restore-twig-copy').on('click', function () {
+
+            const e = document.createElement('textarea');
+            e.value = restore_twig_editor.getValue();
+            document.querySelector('body').append(e);
+            e.select();
+            document.execCommand('copy');
+            e.remove();
+
+            alert('クリップボードにコピーしました')
+        });
+    });
+</script>
+{% endblock javascript %}
+
+{% block main %}
+    <form name="form1" id="form1" role="form" method="post">
+        {{ form_widget(form.mode) }}
+        {{ form_widget(form._token) }}
+
+        <div class="c-contentsArea__cols">
+            <div class="c-contentsArea__primaryCol">
+                <div class="c-primaryCol">
+                    <div class="card rounded border-0 mb-4">
+                        <div class="card-header"><span>{{'joolenplugintemplatemanager4.admin.template_manager.section.name'|trans}}</span></div>
+                        <div class="card-body">
+                            {# MEMO: プラグイン名 #}
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="d-inline-block" data-tooltip="true" data-placement="top" title="{{ 'joolenplugintemplatemanager4.admin.template_manager.plugins.tooltip'|trans }}">
+                                        <span>{{'joolenplugintemplatemanager4.admin.template_manager.plugins.label'|trans}}</span>
+                                        <i class="fa fa-question-circle fa-lg ml-1"></i>
+                                        <span class="badge badge-primary ml-1">{{ 'admin.common.required'|trans }}</span>
+                                    </div>
+                                </div>
+                                <div class="col mb-2">
+                                    {{ form_widget(form.plugins) }}
+                                    {{ form_errors(form.plugins) }}
+                                </div>
+                            </div>
+                            {# MEMO: ファイル名 #}
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="d-inline-block" data-tooltip="true" data-placement="top" title="{{ 'joolenplugintemplatemanager4.admin.template_manager.templates.tooltip'|trans }}">
+                                        <span>{{'joolenplugintemplatemanager4.admin.template_manager.templates.label'|trans}}</span>
+                                        <i class="fa fa-question-circle fa-lg ml-1"></i>
+                                        <span class="badge badge-primary ml-1">{{ 'admin.common.required'|trans }}</span>
+                                    </div>
+                                </div>
+                                <div class="col mb-2">
+                                    {{ form_widget(form.templates) }}
+                                    {{ form_errors(form.templates) }}
+                                </div>
+                            </div>
+                            {# MEMO: コード #}
+                            <div class="row mb-2">
+                                <div class="col-2">
+                                    <div class="d-inline-block" data-tooltip="true" data-placement="top" title="{{ 'joolenplugintemplatemanager4.admin.template_manager.twig.tooltip'|trans }}">
+                                        <span>{{ 'joolenplugintemplatemanager4.admin.template_manager.twig.label'|trans }}</span><i class="fa fa-question-circle fa-lg ml-1"></i>
+                                    </div>
+                                    <span class="badge badge-primary ml-1">{{ 'admin.common.required'|trans }}</span>
+                                </div>
+                                <div class="col-10">
+                                    <div id="twig_editor" style="height: 480px" class="form-control{{ has_errors(form.twig) ? ' is-invalid' }}"></div>
+                                    <div style="display: none">{{ form_widget(form.twig) }}</div>
+                                    {{ form_errors(form.twig) }}
+                                    <div class="d-inline-block mb-2" data-toggle="collapse" href="#toggleRestoreTwig"
+                                         role="button" aria-expanded="false" aria-controls="toggleRestoreTwig">
+                                        <a>
+                                            <i class="fa fa-plus-square-o font-weight-bold mr-1"></i>
+                                            <span class="font-weight-bold text-ec-black">{{ 'joolenplugintemplatemanager4.admin.template_manager.restore_twig.open_label'|trans }}</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# MEMO: プラグインインストール時のtwigを表示する #}
+                            <div class="collapse ec-collapse" id="toggleRestoreTwig">
+                                <div class="row bg-ec-formGray pt-3 mb-2">
+                                    <div class="col-2">
+                                        <div class="d-inline-block" data-tooltip="true" data-placement="top"
+                                             title="{{ 'joolenplugintemplatemanager4.admin.template_manager.restore_twig.tooltip'|trans }}">
+                                            <span>{{ 'joolenplugintemplatemanager4.admin.template_manager.restore_twig.label'|trans }}</span>
+                                            <i class="fa fa-question-circle fa-lg ml-1"></i>
+                                            <a class="btn btn-ec-actionIcon action-restore-twig-copy" data-tooltip="true" data-placement="right" title="{{ 'joolenplugintemplatemanager4.admin.template_manager.copy_restore_twig'|trans }}">
+                                                <i class="far fa-copy fa-lg text-secondary" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col mb-4">
+                                        <div id="restore_twig_editor" style="height: 480px" class="form-control{{ has_errors(form.twig) ? ' is-invalid' }}"></div>
+                                        <div style="display: none">{{ form_widget(form.restore_twig) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="c-conversionArea">
+            <div class="c-conversionArea__container">
+                <div class="row justify-content-between align-items-center">
+                    <div class="col-6">
+                        <div class="c-conversionArea__leftBlockItem">
+                            <a class="c-baseLink"
+                               href="{{ url('admin_store_plugin') }}">
+                                <i class="fa fa-backward" aria-hidden="true"></i>
+                                <span>プラグイン一覧</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="row align-items-center justify-content-end">
+                            <div class="col-auto">
+                                <button id="submit_button" class="btn btn-ec-conversion px-5"
+                                        type="submit">登録</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

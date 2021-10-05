@@ -1,0 +1,20 @@
+# MEMO: サイドナビ
+joolenplugintemplatemanager4.admin.template_manager: "プラグインテンプレート管理"
+
+# MEMO: 編集画面
+joolenplugintemplatemanager4.admin.template_manager.section.name: "プラグインテンプレート設定"
+joolenplugintemplatemanager4.admin.template_manager.plugins.label: "プラグイン名"
+joolenplugintemplatemanager4.admin.template_manager.plugins.tooltip: "対象のプラグインを選択します。"
+joolenplugintemplatemanager4.admin.template_manager.plugins.placeholder: "選択してください"
+joolenplugintemplatemanager4.admin.template_manager.templates.label: "ファイル名"
+joolenplugintemplatemanager4.admin.template_manager.templates.tooltip: "編集したいtwigテンプレートファイルを選択します。"
+joolenplugintemplatemanager4.admin.template_manager.templates.placeholder: "選択してください"
+joolenplugintemplatemanager4.admin.template_manager.templates.no_plugin.placeholder: "プラグイン名を選択してください"
+joolenplugintemplatemanager4.admin.template_manager.templates.no_template.placeholder: "テンプレートがありません"
+joolenplugintemplatemanager4.admin.template_manager.twig.label: "コード"
+joolenplugintemplatemanager4.admin.template_manager.twig.tooltip: "テンプレートファイルを編集します。twigで記述します。"
+joolenplugintemplatemanager4.admin.template_manager.restore_twig.open_label: "プラグインインストール時のtwigを表示する"
+joolenplugintemplatemanager4.admin.template_manager.restore_twig.label: "初期コード"
+joolenplugintemplatemanager4.admin.template_manager.restore_twig.tooltip: "プラグインインストール時のtwigです。インストール時のtwigデータが残っている仕様の場合のみ表示します。編集時の参考にしたり、初期状態に戻したい時にご利用ください。"
+joolenplugintemplatemanager4.admin.template_manager.copy_restore_twig: "複製"
+

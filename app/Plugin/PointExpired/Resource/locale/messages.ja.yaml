@@ -1,0 +1,12 @@
+pointexpired.admin.customer.label.point_expired: ポイント有効期限
+pointexpired.admin.customer.label.extension_period: 有効期限延長日数
+pointexpired.form.config.label.period: ポイント有効期限延長日数
+
+pointexpired.admin.config.title: ポイント有効期限設定
+pointexpired.admin.config.subtitle: プラグイン設定
+pointexpired.admin.setting.rank.label.assign: 延長日数全会員適用
+pointexpired.admin.setting.rank.label.assign_date: 有効期限全会員適用
+
+admin.setting.pointexpired.save.complete: 登録しました。
+admin.setting.pointexpired.assign.complete: 延長日数を全会員に適用しました。
+admin.setting.pointexpired.assign_date.complete: 有効期限を全会員に適用しました。

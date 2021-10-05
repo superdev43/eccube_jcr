@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="{{ asset('assets/css/tempusdominus-bootstrap-4.min.css', 'admin') }}">
+<script>
+$(function() {
+    if ($('[type="date"]').prop('type') != 'date') {
+        // input type属性でdateが利用できるかどうか(カレンダー表示できないブラウザ対応)
+        $.when(
+            $.getScript("{{ asset('assets/js/vendor/moment.min.js', 'admin') }}"),
+            $.getScript("{{ asset('assets/js/vendor/moment-with-locales.min.js', 'admin') }}"),
+            $.getScript("{{ asset('assets/js/vendor/tempusdominus-bootstrap-4.min.js', 'admin') }}")
+        ).done(function() {
+            $('.taba-datepicker').datetimepicker({
+                locale: '{{ eccube_config.locale }}',
+                format: 'YYYY-MM-DD',
+                useCurrent: false,
+                buttons: {
+                    showToday: true,
+                    showClose: true
+                }
+            });
+        });
+    }
+});
+</script>

@@ -1,0 +1,748 @@
+{#
+This file is part of EC-CUBE
+
+Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+
+http://www.ec-cube.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends 'default_frame.twig' %}
+
+{% set body_class = 'product_page' %}
+
+{% block stylesheet %}
+	<style>
+		.slick-slider {
+			margin-bottom: 30px;
+		}
+		.slick-dots {
+			position: absolute;
+			bottom: -45px;
+			display: block;
+			width: 100%;
+			padding: 0;
+			list-style: none;
+			text-align: center;
+		}
+		.slick-dots li {
+			position: relative;
+			display: inline-block;
+			width: 20px;
+			height: 20px;
+			margin: 0 5px;
+			padding: 0;
+
+			cursor: pointer;
+		}
+		.slick-dots li button {
+			font-size: 0;
+			line-height: 0;
+			display: block;
+			width: 20px;
+			height: 20px;
+			padding: 5px;
+			cursor: pointer;
+			color: transparent;
+			border: 0;
+			outline: none;
+			background: transparent;
+		}
+		.slick-dots li button:hover,.slick-dots li button:focus {
+			outline: none;
+		}
+		.slick-dots li button:hover:before, .slick-dots li button:focus:before {
+			opacity: 1;
+		}
+		.slick-dots li button:before {
+			content: " ";
+			line-height: 20px;
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 12px;
+			height: 12px;
+			text-align: center;
+			opacity: .25;
+			background-color: black;
+			border-radius: 50%;
+
+		}
+		.slick-dots li.slick-active button:before {
+			opacity: .75;
+			background-color: black;
+		}
+		.slick-dots li button.thumbnail img {
+			width: 0;
+			height: 0;
+		}
+
+	</style>
+{% endblock %}
+{% block javascript %}
+	<script>
+		eccube.classCategories = {{ class_categories_as_json(Product)|raw }};
+
+		// 規格2に選択肢を割り当てる。
+		function fnSetClassCategories(form, classcat_id2_selected) {
+			var $form = $(form);
+			var product_id = $form.find('input[name=product_id]').val();
+			var $sele1 = $form.find('select[name=classcategory_id1]');
+			var $sele2 = $form.find('select[name=classcategory_id2]');
+			eccube.setClassCategories($form, product_id, $sele1, $sele2, classcat_id2_selected);
+		}
+
+		{% if form.classcategory_id2 is defined %}
+		fnSetClassCategories(
+			$('#form1'), {{ form.classcategory_id2.vars.value|json_encode|raw }}
+		);
+		{% elseif form.classcategory_id1 is defined %}
+		eccube.checkStock($('#form1'), {{ Product.id }}, {{ form.classcategory_id1.vars.value|json_encode|raw }}, null);
+		{% endif %}
+	</script>
+	<script>
+		$(function() {
+			// bfcache無効化
+			$(window).bind('pageshow', function(event) {
+				if (event.originalEvent.persisted) {
+					location.reload(true);
+				}
+			});
+
+			$('.item_visual').slick({
+				dots: false,
+				arrows: false,
+				responsive: [{
+					breakpoint: 768,
+					settings: {
+						dots: true
+					}
+				}]
+			});
+
+			$('.slideThumb').on('click', function() {
+				var index = $(this).attr('data-index');
+				$('.item_visual').slick('slickGoTo', index, false);
+			})
+		});
+	</script>
+	<script>
+		$(function() {
+			$('.add-cart').on('click', function(event) {
+				{% if form.classcategory_id1 is defined %}
+				// 規格1フォームの必須チェック
+				if ($('#classcategory_id1').val() == '__unselected' || $('#classcategory_id1').val() == '') {
+					$('#classcategory_id1')[0].setCustomValidity('{{ '項目が選択されていません'|trans }}');
+					return true;
+				} else {
+					$('#classcategory_id1')[0].setCustomValidity('');
+				}
+				{% endif %}
+
+				{% if form.classcategory_id2 is defined %}
+				// 規格2フォームの必須チェック
+				if ($('#classcategory_id2').val() == '__unselected' || $('#classcategory_id2').val() == '') {
+					$('#classcategory_id2')[0].setCustomValidity('{{ '項目が選択されていません'|trans }}');
+					return true;
+				} else {
+					$('#classcategory_id2')[0].setCustomValidity('');
+				}
+				{% endif %}
+
+				// 個数フォームのチェック
+				if ($('#quantity').val() < 1) {
+					$('#quantity')[0].setCustomValidity('{{ '1以上で入力してください。'|trans }}');
+					return true;
+				} else {
+					$('#quantity')[0].setCustomValidity('');
+				}
+
+				event.preventDefault();
+				$form = $('#form1');
+				$.ajax({
+					url: $form.attr('action'),
+					type: $form.attr('method'),
+					data: $form.serialize(),
+					dataType: 'json',
+					beforeSend: function(xhr, settings) {
+						// Buttonを無効にする
+						$('.add-cart').prop('disabled', true);
+					}
+				}).done(function(data) {
+					// レスポンス内のメッセージをalertで表示
+					$.each(data.messages, function() {
+						$('#ec-modal-header').html(this);
+					});
+
+					$('.ec-modal').show()
+
+					// カートブロックを更新する
+					$.ajax({
+						url: "{{ url('block_cart') }}",
+						type: 'GET',
+						dataType: 'html'
+					}).done(function(html) {
+						$('.ec-headerRole__cart').html(html);
+					});
+				}).fail(function(data) {
+					alert('{{ 'カートへの追加に失敗しました。'|trans }}');
+				}).always(function(data) {
+					// Buttonを有効にする
+					$('.add-cart').prop('disabled', false);
+				});
+			});
+		});
+
+		$('.ec-modal-overlay, .ec-modal .ec-inlineBtn--cancel').on('click', function() {
+			$('.ec-modal').hide()
+		});
+	</script>
+	<script>
+	 $(function() {
+		$('.product-slider').slick({
+		  slidesToShow: 1,
+		  slidesToScroll: 1,
+		  arrows: false,
+		  dots: true,
+		  fade: true,
+		  asNavFor: '.product-nav'
+		});
+		$('.product-nav').slick({
+		  slidesToShow: 4,
+		  slidesToScroll: 1,
+		  asNavFor: '.product-slider',
+		  dots: false,
+		  centerMode: false,
+		  focusOnSelect: true
+		});
+	 });
+	</script>
+{% endblock %}
+
+{% block main %}
+	<div class="ec-productRole">
+	
+		<div class="first-ranking product-details">
+
+			<div class="ec-grid2">
+				<div class="ec-grid2__cell">
+					<div class="ec-sliderItemRole">
+						<div class="item_visual">
+							{% for ProductImage in Product.ProductImage %}
+								<div class="slide-item"><img src="{{ asset(ProductImage, 'save_image') }}"></div>
+							{% else %}
+								<div class="slide-item"><img src="{{ asset(''|no_image_product, 'save_image') }}"/></div>
+							{% endfor %}
+						</div>
+						<div class="item_nav">
+							{% for ProductImage in Product.ProductImage %}
+								<div class="slideThumb" data-index="{{ loop.index0 }}"><img src="{{ asset(ProductImage, 'save_image') }}"></div>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+				<div class="ec-grid2__cell">
+					<div class="ec-productRole__profile">
+						{# 商品名 #}
+						<div class="ec-productRole__title">
+							<h2 class="ec-headingTitle">{{ Product.name }}</h2>
+						</div>
+						{# タグ #}
+						<ul class="ec-productRole__tags">
+							{% for Tag in Product.Tags %}
+								<li class="ec-productRole__tag tag_{{ Tag.id }}">{{ Tag }}</li>
+							{% endfor %}
+						</ul>
+						{# 通常価格 #}
+						{% if Product.hasProductClass -%}
+							<div class="ec-productRole__priceRegular">
+								{% if Product.getPrice01Min is not null and Product.getPrice01IncTaxMin == Product.getPrice01IncTaxMax %}
+									<span class="ec-productRole__priceRegularPrice">{{ '通常価格'|trans }}：<span class="price01-default">{{ Product.getPrice01IncTaxMin|price }}</span></span>
+									<span class="ec-productRole__priceRegularTax">{{ '税込'|trans }}</span>
+								{% elseif Product.getPrice01Min is not null and Product.getPrice01Max is not null %}
+									<span class="ec-productRole__priceRegularPrice">{{ '通常価格'|trans }}：<span class="price01-default">{{ Product.getPrice01IncTaxMin|price }}～ {{ Product.getPrice01IncTaxMax|price }}</span></span>
+									<span class="ec-productRole__priceRegularTax">{{ '税込'|trans }}</span>
+								{% endif %}
+							</div>
+						{% else %}
+							{% if Product.getPrice01Max is not null %}
+								<span class="ec-productRole__priceRegularPrice">{{ '通常価格'|trans }}：{{ Product.getPrice01IncTaxMin|price }}</span>
+								<span class="ec-productRole__priceRegularTax">{{ '税込'|trans }}</span>
+							{% endif %}
+						{% endif %}
+						{# 販売価格 #}
+						<div class="ec-productRole__price">
+							{% if Product.hasProductClass -%}
+								{% if Product.getPrice02IncTaxMin == Product.getPrice02IncTaxMax %}
+									<div class="ec-price">
+										<span class="ec-price__price price02-default">{{ Product.getPrice02IncTaxMin|price }}</span>
+										<span class="ec-price__tax">{{ '税込'|trans }}</span>
+									</div>
+								{% else %}
+									<div class="ec-price">
+										<span class="ec-price__price price02-default">{{ Product.getPrice02IncTaxMin|price }} ～ {{ Product.getPrice02IncTaxMax|price }}</span>
+										<span class="ec-price__tax">{{ '税込'|trans }}</span>
+									</div>
+								{% endif %}
+							{% else %}
+								<div class="ec-price">
+									<span class="ec-price__price">{{ Product.getPrice02IncTaxMin|price }}</span>
+									<span class="ec-price__tax">{{ '税込'|trans }}</span>
+								</div>
+							{% endif %}
+						</div>
+						{# 商品コード #}
+						{% if Product.code_min is not empty %}
+							<div class="ec-productRole__code">
+								{{ '商品コード'|trans }}： <span class="product-code-default">{{ Product.code_min }}{% if Product.code_min != Product.code_max %} ～ {{ Product.code_max }}{% endif %}</span>
+							</div>
+						{% endif %}
+						{# 関連カテゴリ #}
+						{% if Product.ProductCategories is not empty %}
+							<div class="ec-productRole__category">
+								<div>{{ '関連カテゴリ'|trans }}</div>
+								{% for ProductCategory in Product.ProductCategories %}
+									<ul>
+										<li>
+											{% for Category in ProductCategory.Category.path %}
+												<a href="{{ url('product_list') }}?category_id={{ Category.id }}">{{ Category.name }}</a> {%- if loop.last == false %}
+												<span>＞</span>{% endif -%}
+											{% endfor %}
+										</li>
+									</ul>
+								{% endfor %}
+							</div>
+						{% endif %}
+						<form action="{{ url('product_add_cart', {id:Product.id}) }}" method="post" id="form1" name="form1">
+							{% if Product.stock_find %}
+								<div class="ec-productRole__actions">
+									{% if form.classcategory_id1 is defined %}
+										<div class="ec-select">
+											{{ form_widget(form.classcategory_id1) }}
+											{{ form_errors(form.classcategory_id1) }}
+										</div>
+										{% if form.classcategory_id2 is defined %}
+											<div class="ec-select">
+												{{ form_widget(form.classcategory_id2) }}
+												{{ form_errors(form.classcategory_id2) }}
+											</div>
+										{% endif %}
+									{% endif %}
+									<div class="ec-numberInput"><span>{{ '数量'|trans }}</span>
+										{{ form_widget(form.quantity) }}
+										{{ form_errors(form.quantity) }}
+									</div>
+								</div>
+								<div class="ec-productRole__btn">
+									<button type="submit" class="ec-blockBtn--action add-cart">
+										{{ 'カートに入れる'|trans }}
+									</button>
+								</div>
+							{% else %}
+								<div class="ec-productRole__btn">
+									<button type="button" class="ec-blockBtn--action" disabled="disabled">
+										{{ 'ただいま品切れ中です。'|trans }}
+									</button>
+								</div>
+							{% endif %}
+
+							{{ form_rest(form) }}
+						</form>
+						<div class="ec-modal">
+							<div class="ec-modal-overlay">
+								<div class="ec-modal-wrap">
+									<span class="ec-modal-close"><span class="ec-icon"><img src="{{ asset('assets/icon/cross-dark.svg') }}" alt=""/></span></span>
+									<div id="ec-modal-header" class="text-center">{{ 'カートに追加しました。'|trans }}</div>
+									<div class="ec-modal-box">
+										<div class="ec-role">
+											<span class="ec-inlineBtn--cancel">{{ 'お買い物を続ける'|trans }}</span>
+											<a href="{{ url('cart') }}" class="ec-inlineBtn--action">{{ 'カートへ進む'|trans }}</a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						{% if BaseInfo.option_favorite_product %}
+							<form action="{{ url('product_add_favorite', {id:Product.id}) }}" method="post">
+								<div class="ec-productRole__btn">
+									{% if is_favorite == false %}
+										<button type="submit" id="favorite" class="ec-blockBtn--cancel">
+											{{ 'お気に入りに追加'|trans }}
+										</button>
+									{% else %}
+										<button type="submit" id="favorite" class="ec-blockBtn--cancel"
+												disabled="disabled">{{ 'お気に入りに追加済です。'|trans }}
+										</button>
+									{% endif %}
+								</div>
+							</form>
+						{% endif %}
+						<div class="ec-productRole__description">{{ Product.description_detail|raw|nl2br }}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="first-ranking-box">
+				<div class="first-ranking-img">
+					<div class="product-details-table">
+						<h3>希少な高級魚キンキと北海道産の新鮮な生蛸、蟹脚を贅沢にしゃぶしゃぶでどうぞ</h3>
+						<table>
+							<tr>
+								<th>商 品 名</th>
+								<td>北海道産海鮮しゃぶしゃぶ　雅-MIYABI-</td>
+							</tr>
+							<tr>
+								<th>内 容 量</th>
+								<td>キンキ尾頭付き刺身 約○○ｇ/北海道産生蛸 約○○ｇ/蟹脚 約○○ｇ<br/>しゃぶしゃぶお出汁2L / 装飾用飾り花</td>
+							</tr>
+							<tr>
+								<th>原 材 料<br/>産　  地</th>
+								<td>キンキ 北海道産 / 生蛸 北海道産 / 蟹脚 北海道浜中町 / しゃぶしゃぶ極み出汁【発酵調味料（国内製造）、和風だし、白だし、醤油、米発酵調味料、食塩、昆布エキス/酒精、調味料（アミノ酸等）、増粘剤（キサンタン）、酸味料、（一部に小麦・大豆を含む）</td>
+							</tr>
+							<tr>
+								<th>配達方法</th>
+								<td>冷凍便</td>
+							</tr>
+							<tr>
+								<th>賞味期限</th>
+								<td>約１ヶ月推奨（要冷凍-18℃以下）解凍後はその日のうちにお召し上がりください</td>
+							</tr>
+							<tr>
+								<th>アレルゲン</th>
+								<td>
+									<table class="details-table">
+										<tr>
+											<th>卵</th>
+											<th>乳</th>
+											<th>小麦</th>
+											<th>えび</th>
+											<th>かに</th>
+											<th>蕎麦</th>
+											<th>落花生</th>
+										</tr>
+										<tr>
+											<td>○</td>
+											<td>○</td>
+											<td></td>
+											<td>○</td>
+											<td>○</td>
+											<td></td>
+											<td></td>
+										</tr>
+									</table>
+									<p>特定原材料及びそれに準ずるものを表示しています</p>
+								</td>
+							</tr>
+							<tr>
+								<th>目安人数</th>
+								<td>2名～3名程度</td>
+							</tr>
+							<tr>
+								<th>加工業者</th>
+								<td>株式会社Knowledge share<br/>〒068-0029<br/>北海道岩見沢市９条西18丁目８番地の4</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="first-ranking-text">
+					
+					<div class="product-price-cart">
+						<p>会員登録して購入すると718ポイント獲得できます。</p>
+					</div>
+					<div class="details-banner"><img src="/html/user_data/assets/img/product/point-banner.png"/></div>
+					<div class="details-banner"><img src="/html/user_data/assets/img/product/yutube-banner.png"/></div>
+					<div class="details-share">
+						<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"/></a>
+						<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"/></a>
+						<a href="##"><img src="./html/user_data/assets/img/common/icon_Line.svg"/></a>
+					</div>
+				</div>
+			</div>
+			<div class="product-details-content">
+				<div class="footer-content-title details-content-title">
+					<img src="./html/user_data/assets/img/common/logo_footer.png">
+					<h3>北海道海鮮しゃぶしゃぶ　「雅-MIYABI-」　セット内容</h3>
+				</div>
+				<div class="details-banner"><img src="/html/user_data/assets/img/product/product-banner01.jpg"/></div>
+				<div class="footer-content-title details-content-title">
+					<img src="./html/user_data/assets/img/common/logo_footer.png">
+					<h3>お召し上がり方/アレンジレシピ</h3>
+				</div>
+				<div class="arrange-recipe-list">
+					<div class="arrange-recipe-item">
+						<span>1</span>
+						<p>お召し上がりの〇時間前よりしゃぶしゃぶセットを冷蔵解凍する</p>
+						<div class="arrange-recipe-img"><img src="/html/user_data/assets/img/product/no-img.png"/></div>
+					</div>
+					<div class="arrange-recipe-item">
+						<span>2</span>
+						<p>土鍋〈丸コンロにセットした紙鍋〉にお出汁を注ぎ入れる</p>
+						<div class="arrange-recipe-img"><img src="/html/user_data/assets/img/product/no-img.png"/></div>
+					</div>
+					<div class="arrange-recipe-item">
+						<span>3</span>
+						<p>お出汁が沸いてきたらお好みのお野菜を加えてください。</p>
+						<div class="arrange-recipe-img"><img src="/html/user_data/assets/img/product/no-img.png"/></div>
+					</div>
+					<div class="arrange-recipe-item">
+						<span>4</span>
+						<p>沸いたお出汁に解凍済みのキンキ等をしゃぶしゃぶしてお召し上がりください。</p>
+						<div class="arrange-recipe-img"><img src="/html/user_data/assets/img/product/no-img.png"/></div>
+					</div>
+				</div>
+				<div class="choice">
+					<div class="choice-text">
+						<h4>【レアがお好みの方】</h4>
+						<p>表面の色が変わり始める（3～4秒程度）くらいでお召しあがり下さい。<br/><span class="red">※蟹脚はしっかりと火を通してください。</span></p>
+						<h4>【しっかり火を通したい方】</h4>
+						<p>中までしっかり火を通して（10秒程）お召し上がりください。</p>
+					</div>
+					<div class="choice-r">
+						<div class="details-banner"><img src="/html/user_data/assets/img/product/yutube-banner.png"></div>
+						<div class="details-share">
+							<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"></a>
+							<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"></a>
+							<a href="##"><img src="./html/user_data/assets/img/common/icon_Line.svg"></a>
+						</div>
+					</div>
+				</div>
+				<div class="cookbook-recipe">
+					<h3>アレンジレシピ</h3>
+					<div class="cookbook-recipe-list">
+						<div class="cookbook-recipe-text">
+							<h4>しゃぶしゃぶの残り汁で作る<span>炊き込みご飯</span></h4>
+							<div class="cookbook-recipe-item">
+								<span>1</span>
+								<p>鍋やしゃぶしゃぶで残ったスープをザルや厚手のクッキングペーパーでこす。</p>
+							</div>
+							<div class="cookbook-recipe-item">
+								<span>2</span>
+								<p>お米をといでスープ、醤油、塩などの調味料を入れてざっと混ぜる。</p>
+							</div>
+							<div class="cookbook-recipe-item">
+								<span>3</span>
+								<p>残った具材やお好みの追加具材を刻んで加え、お米を炊きます。</p>
+							</div>
+						</div>
+						<div class="cookbook-recipe-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+					</div>
+					<div class="cookbook-recipe-tips">
+						<h5>1ポイントアドバイス</h5>
+						<div class="cookbook-recipe-tips-box">
+							<p>炊く前にしょうがのみじん切りを加えると臭みがなくなりさわやかな香味のある炊き込みご飯に仕上がります。土鍋で炊くとおこげも楽しめるのでおすすめです。</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="home-gift">
+                <div class="inner">
+                    <div class="gift-banner"><a href="##"><img src="./html/user_data/assets/img/common/gift-bannner.jpg"></a></div>
+                    <div class="gift-box pc">
+                        <h3>ギフトサービスについて</h3>
+                        <p>GOURMET RESORT（グルメリゾート）では誕生日、記念日、御祝や御礼など、<span>大切な方へ心のこもったおくりもの</span>へのオプションとしてラッピングや花束ブーケの同梱サービスをご用意しております。</p>
+                        <div class="gift-link"><a href="##">詳細はこちら<img src="./html/user_data/assets/img/common/icon_link.png"></a></div>
+                    </div>
+                </div>
+            </div>
+			<div class="product-vioce">
+				<div class="product-title text-center"><h3>ご購入いただいたお客様の声</h3></div>
+				<div class="first-ranking-star product-vioce-star"><span>レビュー評価</span><img src="./html/user_data/assets/img/home/star4.6.png"><span>星5つ中の4.6</span></div>
+				<div class="product-vioce-list">
+					<div class="product-vioce-item">
+						<div class="vioce-person">
+							<p class="vioce-name">noriさん（22）</p>
+							<p class="vioce-category">購入者</p>
+							<p class="vioce-address">北海道</p>
+							<p class="vioce-age">40代</p>
+							<p class="vioce-sex">男性</p>
+						</div>
+						<div class="vioce-date">
+							<p>投稿日：2021/8/15</p>
+						</div>
+						<div class="vioce-star">
+							<p>レビュー評価</p>
+							<img src="/html/user_data/assets/img/product/5star.png">
+							<span>5.0</span>
+						</div>
+						<div class="vioce-content">
+							<p>こんなご時世なので、特別な日を自宅で楽しむ為に思い切って購入してみました。<br/>届いた商品を開けた瞬間既に盛り付けでインパクトがありました。そしてさすがの味！！臭みもまったくなく、解凍するだけだったのでとっても簡単でした。自宅で高級料亭の気分を味わえました！ありがとうございます。今度は違う商品も楽しみたいとおもいます。</p>
+						</div>
+					</div>
+					<div class="product-vioce-item">
+						<div class="vioce-person">
+							<p class="vioce-name">noriさん（22）</p>
+							<p class="vioce-category">購入者</p>
+							<p class="vioce-address">北海道</p>
+							<p class="vioce-age">40代</p>
+							<p class="vioce-sex">男性</p>
+						</div>
+						<div class="vioce-date">
+							<p>投稿日：2021/8/15</p>
+						</div>
+						<div class="vioce-star">
+							<p>レビュー評価</p>
+							<img src="/html/user_data/assets/img/product/5star.png">
+							<span>5.0</span>
+						</div>
+						<div class="vioce-content">
+							<p>こんなご時世なので、特別な日を自宅で楽しむ為に思い切って購入してみました。<br/>届いた商品を開けた瞬間既に盛り付けでインパクトがありました。そしてさすがの味！！臭みもまったくなく、解凍するだけだったのでとっても簡単でした。自宅で高級料亭の気分を味わえました！ありがとうございます。今度は違う商品も楽しみたいとおもいます。</p>
+						</div>
+					</div>
+				</div>
+				<div class="vioce-link">
+					<a href="##">すべてのレビューを見る</a>
+					<a href="##">レビューを書く</a>
+				</div>
+			</div>
+			<div class="dishes-together">
+				<div class="product-title"><h3>一緒に購入されている料理</h3></div>
+				<div class="dishes-together-box">
+					<div class="dishes-together-list">
+						<div class="dishes-together-item">
+							<div class="dishes-together-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+							<div class="dishes-together-text">
+								<h5>北海道海鮮<br/>しゃぶしゃぶ-雅-</h5>
+								<p class="dishes-together-price">33,000円(税込)</p>
+							</div>
+						</div>
+						<div class="dishes-together-item">
+							<div class="dishes-together-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+							<div class="dishes-together-text">
+								<h5>ホタテの釜飯</h5>
+								<p class="dishes-together-price">8,000円(税込)</p>
+							</div>
+						</div>
+						<div class="dishes-together-item">
+							<div class="dishes-together-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+							<div class="dishes-together-text">
+								<h5>北海道<br/>スモーク牛タン</h5>
+								<p class="dishes-together-price">6,000円(税込)</p>
+							</div>
+						</div>
+					</div>
+					<div class="dishes-together-totalprice">
+						<p>３点すべて購入：<span>￥47,000(税込)</span></p>
+					</div>
+				</div>
+			</div>
+			<div class="here-too">
+				<div class="product-title"><h3>こちらもおすすめ</h3></div>
+				<div class="here-too-list">
+					<div class="here-too-item">
+						<div class="here-too-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+						<div class="here-too-text">
+							<h5>伊勢海老とタラバガニの<br/>　　　　　　チリソース</h5>
+							<img class="here-too-star" src="/html/user_data/assets/img/product/5star.png">
+							<p class="here-too-price">￥5,400(税込)</p>
+						</div>
+					</div>
+					<div class="here-too-item">
+						<div class="here-too-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+						<div class="here-too-text">
+							<h5>まるごと伊勢海老の<br/>　　海老味噌らーめん</h5>
+							<img class="here-too-star" src="/html/user_data/assets/img/product/5star.png">
+							<p class="here-too-price">￥5,400(税込)</p>
+						</div>
+					</div>
+					<div class="here-too-item">
+						<div class="here-too-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+						<div class="here-too-text">
+							<h5>鯛とロブスターの<br/>　      アクアパッツァ</h5>
+							<img class="here-too-star" src="/html/user_data/assets/img/product/5star.png">
+							<p class="here-too-price">￥5,400(税込)</p>
+						</div>
+					</div>
+					<div class="here-too-item">
+						<div class="here-too-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+						<div class="here-too-text">
+							<h5>伊勢海老のアヒージョ</h5>
+							<img class="here-too-star" src="/html/user_data/assets/img/product/5star.png">
+							<p class="here-too-price">￥5,400(税込)</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="product-ranking">
+				<div class="product-ranking-list">
+					<div class="product-ranking-item">
+						<h5 class="product-ranking-title">今月のランキング</h5>
+						<div class="product-ranking-month">
+							<div class="product-ranking-month-item product-ranking-month-item1">
+								<a href="##">
+									<img src="/html/user_data/assets/img/product/gold.png"/>
+									<span>1</span>
+									<p>大海老のトマトクリームパスタ</p>
+								</a>
+							</div>
+							<div class="product-ranking-month-item product-ranking-month-item2">
+								<a href="##">
+									<img src="/html/user_data/assets/img/product/silver.png"/>
+									<span>2</span>
+									<p>北海道海鮮しゃぶしゃぶ</p>
+								</a>
+							</div>
+							<div class="product-ranking-month-item product-ranking-month-item3">
+								<a href="##">
+									<img src="/html/user_data/assets/img/product/copper.png"/>
+									<span>3</span>
+									<p>毛蟹まるごと一杯あんかけチャーハン</p>
+								</a>
+							</div>
+						</div>
+					</div>
+					<div class="product-ranking-item">
+						<h5 class="product-ranking-title">人気のジャンル</h5>
+						<div class="genre-popular">
+							<div class="genre-popular-item">
+								<a href="##">
+									<div class="genre-popular-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+									<p>日本料理</p>
+								</a>
+							</div>
+							<div class="genre-popular-item">
+								<a href="##">
+									<div class="genre-popular-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+									<p>中華料理</p>
+								</a>
+							</div>
+							<div class="genre-popular-item">
+								<a href="##">
+									<div class="genre-popular-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+									<p>スペイン料理</p>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	
+		
+		{% if Product.freearea %}
+			 <div class="ec-productRole__description">
+				 {{ include(template_from_string(Product.freearea)) }}
+			</div>
+		{% endif %}
+
+
+		{% if TabaCustomFieldsProduct('deliverydate', Product.id) %}
+		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('deliverydate', Product.id)|raw }}</p>
+		{% endif %}
+		{% if TabaCustomFieldsProduct('ranking', Product.id) %}
+		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('ranking', Product.id)|raw }}</p>
+		{% endif %}
+		{% if TabaCustomFieldsProduct('recommend', Product.id) %}
+		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('recommend', Product.id)|raw }}</p>
+		{% endif %}
+		{% if TabaCustomFieldsProduct('askingprice', Product.id) %}
+		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('askingprice', Product.id)|raw }}</p>
+		{% endif %}
+		{% if TabaCustomFieldsProduct('review', Product.id) %}
+		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('review', Product.id)|raw }}</p>
+		{% endif %}
+		{% if TabaCustomFieldsProduct('youtube', Product.id) %}
+		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('youtube', Product.id)|raw }}</p>
+		{% endif %}
+	</div>
+{% endblock %}

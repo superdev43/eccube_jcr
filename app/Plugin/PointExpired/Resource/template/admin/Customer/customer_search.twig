@@ -1,0 +1,40 @@
+{#
+* Plugin Name : PointExpired
+*
+* Copyright (C) BraTech Co., Ltd. All Rights Reserved.
+* http://www.bratech.co.jp/
+*
+* For the full copyright and license information, please view the LICENSE
+* file that was distributed with this source code.
+#}
+
+<div id="point_expired_search_customer" style="display:none;">
+    <div class="row mb-2">
+        <div class="col">
+            <div>
+                <label>{{ 'pointexpired.admin.customer.label.point_expired'|trans }}</label>
+                <div class="form-row align-items-center">
+                    <div class="col">
+                        {{ form_widget(searchForm.point_expired_date_start) }}
+                        {{ form_errors(searchForm.point_expired_date_start) }}
+                    </div>
+                    <div class="col-auto text-center"><span>{{ 'admin.common.separator__range'|trans }}</span></div>
+                    <div class="col">
+                        {{ form_widget(searchForm.point_expired_date_end) }}
+                        {{ form_errors(searchForm.point_expired_date_end) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $elem = $('#point_expired_search_customer');
+        $('#searchDetail').append($elem.html());
+        $elem.remove();
+    });
+</script>

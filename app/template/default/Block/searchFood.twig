@@ -1,0 +1,129 @@
+{% set Categories = repository('Eccube\\Entity\\Category').getList() %}
+{% set Tags = repository('Eccube\\Entity\\Tag').getList() %}
+{% set PriceRanges = repository('Plugin\\TabaCustomFields\\Entity\\CustomFields').getPriceRange() %}
+{% set Pranges = PriceRanges[0].formOption|split('\r\n') %}
+{# {{ dump(Pranges) }} #}
+
+
+
+<div class="search-food pc_search">
+    <div class="home-title"><h2>こだわり条件で料理を検索</h2></div>
+    <form action="{{ path('product_list') }}">
+        <dl>
+            <dt>カテゴリ</dt>
+            <dd>
+            {% for Category in Categories %}
+                <span><label><input type="radio" name="category_id" value="{{Category.id}}"/>{{ Category.name }}</label></span>
+            {% endfor %}
+            </dd>
+        </dl>
+        <dl>
+            <dt>タ　　グ</dt>
+            <dd>
+            {% for Tag in Tags %}
+                <span><label><input type="radio" name="tag" value="{{Tag.id}}"/>{{ Tag.name }}</label></span>
+            {% endfor %}
+            </dd>
+        </dl>
+        <dl>
+            <dt>おくりもの</dt>
+            <dd>
+                <span><label><input type="radio" name="oharimono" value="お花"/>お花</label></span>
+                <span><label><input type="radio" name="oharimono" value="ラッピング"/>ラッピング</label></span>
+                <span><label><input type="radio" name="oharimono" value="メッセージカード"/>メッセージカード</label></span>
+            </dd>
+        </dl>
+        <dl>
+            <dt>価    格    帯</dt>
+            <dd>
+                <select name="price_range" placeholder="未選択">
+                    <option value="" disabled selected hidden>未選択</option>   
+                    {% for price in Pranges %}
+                       <option value="{{ price }}">{{ price }}</option>
+                    {% endfor %}
+                </select>
+                {# <span>円 ~ </span>
+                <select>
+                    <option>未選択</option>
+                </select><span>円</span> #}
+            </dd>
+        </dl>
+        <div class="search-food-submit"><button><img src="/html/user_data/assets/img/common/icon_search.svg" alt="">  </button></div>
+    </form>
+
+</div>      
+
+<div class="search-food mobile">
+    <div class="home-title"><h2>こだわり条件で料理を検索</h2></div>
+    <form action="{{ path('product_list') }}">
+        <dl>
+            <dt>カテゴリ</dt>
+            <dd>
+                <select name="category_id" placeholder="未選択">
+                    <option value="" disabled selected hidden>未選択</option>
+                    {% for Category in Categories %}
+                       <option value="{{Category.id}}">{{ Category.name }}</option>
+                    {% endfor %}
+                </select>
+            </dd>
+        </dl>
+        <dl>
+            <dt>タ　　グ</dt>
+            <dd>
+                <select name="tag" placeholder="未選択">
+                    <option value="" disabled selected hidden>未選択</option>
+                    {% for Tag in Tags %}
+                       <option value="{{Tag.id}}">{{ Tag.name }}</option>
+                    {% endfor %}
+                </select>
+            </dd>
+        </dl>
+        <dl>
+            <dt>おくりもの</dt>
+            <dd>
+                <select name="oharimono" value="">
+                    <option value="" disabled selected hidden>未選択</option>
+                    <option value="お花">お花</option>
+                    <option value="ラッピング">ラッピング</option>
+                    <option value="メッセージカード">メッセージカード</option>
+                </select>
+            </dd>
+        </dl>
+        <dl>
+            <dt>価    格    帯</dt>
+            <dd>
+                <select name="price_range" placeholder="未選択">
+                    <option value="" disabled selected hidden>未選択</option>
+                    {% for price in Pranges %}
+                       <option value="{{ price }}">{{ price }}</option>
+                    {% endfor %}
+                </select>
+                {# <span>円 ~ </span>
+                <select>
+                    <option>未選択</option>
+                </select><span>円</span> #}
+            </dd>
+        </dl>
+        <div class="search-food-submit"><button><img src="/html/user_data/assets/img/common/icon_search.svg" alt="">  </button></div>
+    </form>
+
+</div> 
+<style>
+@media screen and (max-width: 500px) {
+    .pc_search {
+        display: none;
+    }
+
+    .mobile {
+        display: block;
+    }
+}
+@media screen and (min-width: 500px) {
+    .pc_search {
+        display: block;
+    }
+    .mobile {
+        display: none;
+    }
+}
+</style>

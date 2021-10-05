@@ -1,0 +1,14 @@
+<script>
+    $(function () {
+
+        if ($('.ec-guest').parent().hasClass('ec-grid3__cell')) {
+            $('.ec-guest').parent().remove()
+        }
+
+        $('.ec-guest').remove()
+
+        if ($('#shopping_login').parent().hasClass('ec-grid3__cell2')) {
+            $('#shopping_login').parent().removeClass('ec-grid3__cell2').addClass('ec-grid3__cell3')
+        }
+    })
+</script>

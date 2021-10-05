@@ -1,0 +1,28 @@
+{% set const = TabaCustomFieldsConstants %}
+{% set bind_prefix = constant('ADMIN_BIND_PREFIX',const) %}
+{% set trans_prefix = constant('PLUGIN_CODE_LC',const) %}
+<script>
+    $(function() {
+        var appendNav = $('#nav-{{ constant('PLUGIN_CODE_LC',const) }}-subnav');
+        $('#nav-{{ constant('PLUGIN_CATEGORY_ID',const) }}').append(appendNav.html());
+    });
+</script>
+<ul id="nav-{{ constant('PLUGIN_CODE_LC',const) }}-subnav" style="display:none;">
+    <a
+        class="c-mainNavArea__navItemSubTitle{{ active_menus(menus)[1] != constant('PLUGIN_CODE_LC',const) ? ' collapsed' }}"
+        data-toggle="collapse"
+        href="#nav-{{ constant('PLUGIN_CODE_LC',const) }}"
+        aria-expanded="{{ active_menus(menus)[1] != constant('PLUGIN_CODE_LC',const) ? 'true' : 'false' }}"
+        aria-controls="nav-{{ constant('PLUGIN_CATEGORY_ID',const) }}">
+        <span style="font-size: 14px;">カスタムフィールド</span></a>
+    <ul class="collapse{{ active_menus(menus)[1] == constant('PLUGIN_CODE_LC',const) ? ' show' }}" id="nav-{{ constant('PLUGIN_CODE_LC',const) }}">
+        {% for row in TabaCustomFieldsConstants.TARGET_ENTITY %}
+            <li><a href="{{ url(bind_prefix~'list_'~row.key) }}" ><span>&nbsp;{{ row.name|trans }}</span></a></li>
+            <li><a href="{{ path(bind_prefix~'list_'~row.key) }}" {{ active_menus(menus)[2] == constant('PLUGIN_CODE_LC',const)~'_list_'~row.key ? 'class="is-active"' }} ><span>&nbsp;&nbsp;{{ 'taba_custom_fields.nav.field_list'|trans }}</span></a></li>
+            <li><a href="{{ path(bind_prefix~'regist_'~row.key) }}" {{ active_menus(menus)[2] == constant('PLUGIN_CODE_LC',const)~'_regist_'~row.key ? 'class="is-active"' }} ><span>&nbsp;&nbsp;{{ 'taba_custom_fields.nav.registration'|trans }}</span></a></li>
+            {% if row.key == "product" %}
+            <li><a href="{{ path(bind_prefix~row.key~'_csv_manage') }}" {{ active_menus(menus)[2] == constant('PLUGIN_CODE_LC',const)~'_'~row.key~'_csv_manage' ? 'class="is-active"' }} ><span>&nbsp;&nbsp;{{ 'taba_custom_fields.nav.csv_manage'|trans }}</span></a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</ul>

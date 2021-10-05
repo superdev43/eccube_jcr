@@ -1,0 +1,55 @@
+{#
+Copyright (C) SPREAD WORKS Inc. All Rights Reserved.
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends 'default_frame.twig' %}
+{% use "bootstrap_3_layout.html.twig" %}
+
+
+{% set body_class = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_page' %}
+{% set menus = [constant('PLUGIN_CATEGORY_ID', TabaCustomFieldsConstants),constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)] %}
+{% set bind_prefx = constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants) %}
+{% set tag_id_prefix = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_entity_list' %}
+{% block title %}{{ constant('PAGE_TITLE', TabaCustomFieldsConstants)|raw }}{% endblock %}
+
+
+
+{% block main %}
+    <div id="{{ tag_id_prefix }}" class="col-md-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">カスタムフィールド 追加先一覧</h3>
+            </div>
+            <div class="box-body">
+                <div class="table_list">
+                    {% if not TabaCustomFieldsConstants.TARGET_ENTITY %}
+                        データがありません。
+                    {% else %}
+                        <div class="table-responsive with-border">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>追加先</th>
+                                        <th>&nbsp;</th>
+                                        <th>&nbsp;</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in TabaCustomFieldsConstants.TARGET_ENTITY %}
+                                        <tr>
+                                            <td>{{ row.name }}</td>
+                                            <td><a href="{{ path(bind_prefx~'_customfields_list_'~row.key) }}" >フィールド一覧</a></td>
+                                            <td><a href="{{ path(bind_prefx~'_regist_'~row.key) }}" >新規登録</a></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div><!-- /.box -->
+    </div>
+{% endblock %}

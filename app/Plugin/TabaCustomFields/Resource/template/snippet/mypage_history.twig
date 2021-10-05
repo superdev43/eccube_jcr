@@ -1,0 +1,14 @@
+<script>
+    $(function () {
+        $('.ec-orderMails').before($('.tabacustomfields'));
+    });
+</script>
+{% set const = TabaCustomFieldsConstants %}
+{% for cf in customFields %}
+<div class="tabacustomfields">
+    <div class="ec-rectHeading">
+        <h2>{{ cf.label }}</h2>
+    </div>
+    <p>{{ attribute(customFieldsContents, constant('CUSTOM_FIELD_PROPATY_NAME', const)~cf.columnId)|join(', ') }}</p>
+</div>
+{% endfor %}

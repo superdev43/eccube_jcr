@@ -1,0 +1,1 @@
+{"name":"ec-cube\/TabaHtmlEditor","version":"1.0.5","description":"taba app HTML\u30a8\u30c7\u30a3\u30bf\u30d7\u30e9\u30b0\u30a4\u30f3","type":"eccube-plugin","require":{"ec-cube\/plugin-installer":"~0.0.3"},"extra":{"code":"TabaHtmlEditor","id":1751}}

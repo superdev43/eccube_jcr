@@ -1,0 +1,40 @@
+{#
+* Plugin Name : PointExpired
+*
+* Copyright (C) BraTech Co., Ltd. All Rights Reserved.
+* http://www.bratech.co.jp/
+*
+* For the full copyright and license information, please view the LICENSE
+* file that was distributed with this source code.
+#}
+
+<table style="display:none;">
+<tbody id="point_expired">
+    <tr>
+        <th class="w-25">{{ 'pointexpired.admin.customer.label.point_expired'|trans }}</th>
+        <td>
+            {% if search_data.point_expired_date_start is defined %}
+                {% if search_data.point_expired_date_start is null %}
+                    ({{ 'mailmagazine.history.condition.label_null'|trans }})
+                {% else %}
+                    {{ search_data.point_expired_date_start|date("Y/m/d") }}
+                {% endif %}
+                ～
+                {% if search_data.point_expired_date_end is null %}
+                    ({{ 'mailmagazine.history.condition.label_null'|trans }})
+                {% else %}
+                    {{ search_data.point_expired_date_end|date("Y/m/d") }}
+                {% endif %}
+            {% endif %}
+        </td>
+    </tr>
+</tbody>
+</table>
+
+<script>
+    $(function() {
+        $elem = $('#point_expired');
+        $('tbody:eq(0)').append($elem.html());
+        $elem.remove();
+    });
+</script>

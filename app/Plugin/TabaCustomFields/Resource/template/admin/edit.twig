@@ -1,0 +1,496 @@
+{#
+Copyright (C) SPREAD WORKS Inc. All Rights Reserved.
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+
+{% extends '@admin/default_frame.twig' %}
+
+{% set entity_name = "" %}
+{% for entity in TabaCustomFieldsConstants.TARGET_ENTITY %}
+    {% if target_entity == entity.key %}
+    {% set entity_name = entity.name %}
+    {% endif %}
+{% endfor %}
+
+{% set body_class = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_page' %}
+{% set menus = [constant('PLUGIN_CATEGORY_ID', TabaCustomFieldsConstants), constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants), constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_regist_'~target_entity] %}
+{% set bind_prefx = constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants) %}
+{% block title %}{{ constant('PAGE_TITLE', TabaCustomFieldsConstants)|raw }}{% endblock %}
+{% block sub_title %}{{ entity_name|e|trans }} {{ 'taba_custom_fields.admin.edit.sub_title'|trans }}{% endblock %}
+
+{% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}
+
+{% block javascript %}
+<script>
+    {% if TabaCustomFieldsConstants.FIELD_TYPE %}
+        var field_type = {{ TabaCustomFieldsConstants.FIELD_TYPE | json_encode()|raw }};
+    {% endif %}
+    {% if TabaCustomFieldsConstants.DEFAULT_AVAILABLE_VALIDATION_RULES %}
+        var default_available_validation_rules = {{ TabaCustomFieldsConstants.DEFAULT_AVAILABLE_VALIDATION_RULES | json_encode()|raw }};
+    {% endif %}
+    $(function () {
+        set_validation_form();
+        $('#taba_custom_fields_formtype_field_type').change(function() {
+            set_validation_form();
+        });
+    });
+    function reset_validation_form() {
+         $.each(default_available_validation_rules, function(i, value) {
+            if (value === true) {
+                $("[id^=taba_custom_fields_formtype_" + i + "]").prop("disabled", false);
+                $("#detail_box__" + i).show();
+            } else {
+                $("[id^=taba_custom_fields_formtype_" + i + "]").prop("disabled", true);
+                $("#detail_box__" + i).hide();
+            }
+        });
+    }
+    function set_validation_form() {
+        reset_validation_form();
+        var selectFieldType = field_type[$('#taba_custom_fields_formtype_field_type').val()];
+        if (!$('#taba_custom_fields_formtype_field_type').val()
+            || !selectFieldType
+            || !selectFieldType.available_validation_rules) {
+            return;
+        }
+
+        var choicesFormArray = ['select','radio','checkbox'];
+        if($.inArray($('#taba_custom_fields_formtype_field_type').val(), choicesFormArray) >= 0){
+            $("#taba_custom_fields_formtype_form_option").prop("disabled", false);
+            $("#detail_box__form_option").show();
+        } else {
+            $("#taba_custom_fields_formtype_form_option").prop("disabled", true);
+            $("#detail_box__form_option").hide();
+        }
+
+        $.each(field_type[$('#taba_custom_fields_formtype_field_type').val()].available_validation_rules, function(i, value) {
+            if (value === true) {
+                $("[id^=taba_custom_fields_formtype_" + i + "]").prop("disabled", false);
+                $("#detail_box__" + i).show();
+            } else {
+                $("[id^=taba_custom_fields_formtype_" + i + "]").prop("disabled", true);
+                $("#detail_box__" + i).hide();
+            }
+        });
+    }
+</script>
+{% endblock %}
+
+{% block main %}
+<form name="customer_form" role="form" id="customer_form" method="post" action="{%- if customField.column_id %}{{ path(bind_prefx~'edit_'~target_entity , { column_id : customField.column_id }) }}{% else %}{{ path(bind_prefx~'regist_'~target_entity) }}{% endif -%}">
+    {{ form_widget(form._token) }}
+    <div class="c-outsideBlock">
+        <div class="c-outsideBlock__contents">
+            <div class="card rounded border-0 mb-4">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="d-inline-block">
+                                <span class="card-title">{{ 'taba_custom_fields.admin.edit.custom_field'|trans }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body mb-lg-5">
+                    {% if customField.column_id %}
+                        <div class="row" id="detail_box__column_id">
+                            <div class="col-3">
+                                <div class="d-inline-block">
+                                    <span>{{ 'taba_custom_fields.admin.edit.field_id'|trans }}</span>
+                                </div>
+                            </div>
+                            <div class="col mb-2">
+                                {{ customField.column_id }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="row" id="detail_box__target_entity">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>{{ 'taba_custom_fields.admin.edit.add'|trans }}</span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {% for entity in  TabaCustomFieldsConstants.TARGET_ENTITY %}
+                                {% if target_entity == entity.key %}
+                                    {{ entity.name|e|trans }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if customField.column_id and customField.field_type %}
+                        <div class="row" id="detail_box__field_type">
+                            <div class="col-3">
+                                <div class="d-inline-block">
+                                    <span>{{ form.field_type.vars.label|trans }}</span>
+                                </div>
+                            </div>
+                            <div class="col mb-2">
+                                {{ attribute(TabaCustomFieldsConstants.FIELD_TYPE, customField.field_type).label|trans }}
+                                {{ form_widget(form.field_type) }}
+                                {{ form_errors(form.field_type) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="row" id="detail_box__data_key">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                            <span>
+                                {{ form.data_key.vars.label|trans }}
+                                <i class="fa fa-question-circle fa-lg ml-1" data-toggle="tooltip" title="{{ 'taba_custom_fields.admin.edit.data_key_tooltip'|trans|raw }}"></i>
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.data_key) }}
+                            {{ form_errors(form.data_key) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__label">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                            <span>
+                                {{ form.label.vars.label|trans }}
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.label) }}
+                            {{ form_errors(form.label) }}
+                        </div>
+                    </div>
+                    {% if customField.column_id == false or customField.field_type == false %}
+                        <div class="row" id="detail_box__field_type">
+                            <div class="col-3">
+                                <div class="d-inline-block" {% if target_entity == "product" %} data-toggle="tooltip" title="{{ 'taba_custom_fields.admin.edit.field_type_tooltip'|trans }}" {% endif %}>
+                                <span>
+                                    {{ form.field_type.vars.label|trans }}
+                                    {% if target_entity == "product" %}
+                                        <i class="fa fa-question-circle fa-lg ml-1"></i>
+                                    {% endif %}
+                                </span>
+                                </div>
+                            </div>
+                            <div class="col mb-2">
+                                {{ form_widget(form.field_type) }}
+                                {{ form_errors(form.field_type) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="row" id="detail_box__form_option">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.form_option.vars.label|trans }}
+                                    <i class="fa fa-question-circle fa-lg ml-1" data-toggle="tooltip" title="{{ 'taba_custom_fields.admin.edit.form_options_tooltip'|trans|raw }}"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.form_option) }}
+                            {{ form_errors(form.form_option) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__read_allowed">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.read_allowed.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.read_allowed) }}
+                            {{ form_errors(form.read_allowed) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__write_allowed">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.write_allowed.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.write_allowed) }}
+                            {{ form_errors(form.write_allowed) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__form_properties">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.form_properties.vars.label|trans }}
+                                </span>
+                                <i class="fa fa-question-circle fa-lg ml-1" data-html="true" data-toggle="tooltip" title='{{ 'taba_custom_fields.admin.edit.form_prop_tooltip'|trans|raw }}'></i>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.form_properties) }}
+                            {{ form_errors(form.form_properties) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card rounded border-0 mb-4">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="d-inline-block">
+                                <span class="card-title">{{ 'taba_custom_fields.admin.edit.validation_define'|trans }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body mb-lg-5">
+                    <div class="row" id="detail_box__validation_not_blank">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                            <span>
+                                {{ form.validation_not_blank.vars.label|trans }}
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_not_blank) }}
+                            {{ form_errors(form.validation_not_blank) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_is_number">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                            <span>
+                                {{ form.validation_is_number.vars.label|trans }}
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_is_number) }}
+                            {{ form_errors(form.validation_is_number) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_max_number">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_max_number.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_max_number) }}
+                            {{ form_errors(form.validation_max_number) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_min_number">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_min_number.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_min_number) }}
+                            {{ form_errors(form.validation_min_number) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_unique">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_unique.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_unique) }}
+                            {{ form_errors(form.validation_unique) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_max_length">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_max_length.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_max_length) }}
+                            {{ form_errors(form.validation_max_length) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_min_length">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_min_length.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_min_length) }}
+                            {{ form_errors(form.validation_min_length) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_max_checked_number">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_max_checked_number.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_max_checked_number) }}
+                            {{ form_errors(form.validation_max_checked_number) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_min_checked_number">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_min_checked_number.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_min_checked_number) }}
+                            {{ form_errors(form.validation_min_checked_number) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_document_file_type">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_document_file_type.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_document_file_type) }}
+                            {{ form_errors(form.validation_document_file_type) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_image_file_type">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_image_file_type.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_image_file_type) }}
+                            {{ form_errors(form.validation_image_file_type) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_max_file_size">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_max_file_size.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_max_file_size) }}
+                            {{ form_errors(form.validation_max_file_size) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_max_pixel_dimension_width">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_max_pixel_dimension_width.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_max_pixel_dimension_width) }}
+                            {{ form_errors(form.validation_max_pixel_dimension_width) }}
+                        </div>
+                    </div><div class="row" id="detail_box__validation_min_pixel_dimension_width">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_min_pixel_dimension_width.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_min_pixel_dimension_width) }}
+                            {{ form_errors(form.validation_min_pixel_dimension_width) }}
+                        </div>
+                    </div><div class="row" id="detail_box__validation_max_pixel_dimension_height">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_document_file_type.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_document_file_type) }}
+                            {{ form_errors(form.validation_document_file_type) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_min_pixel_dimension_height">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_min_pixel_dimension_height.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_min_pixel_dimension_height) }}
+                            {{ form_errors(form.validation_min_pixel_dimension_height) }}
+                        </div>
+                    </div>
+                    <div class="row" id="detail_box__validation_regex">
+                        <div class="col-3">
+                            <div class="d-inline-block">
+                                <span>
+                                    {{ form.validation_regex.vars.label|trans }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col mb-2">
+                            {{ form_widget(form.validation_regex) }}
+                            {{ form_errors(form.validation_regex) }}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="c-conversionArea">
+        <div class="c-conversionArea__container">
+            <div class="row justify-content-between align-items-center">
+                <div class="col-6">
+                    <div class="c-conversionArea__leftBlockItem">
+                        <a class="c-baseLink" href="{{ path(bind_prefx~'list_'~target_entity) }}">
+                            <i class="fa fa-backward" aria-hidden="true"></i><span>{{ entity_name|e|trans }} {{ 'taba_custom_fields.admin.edit.back_to_list'|trans }}</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="row align-items-center justify-content-end">
+                        <div class="col-auto">
+                            <button class="btn btn-ec-conversion px-5" type="submit">
+                                {{ 'taba_custom_fields.admin.edit.registration'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

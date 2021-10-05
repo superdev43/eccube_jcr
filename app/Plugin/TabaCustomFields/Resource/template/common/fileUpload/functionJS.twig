@@ -1,0 +1,147 @@
+{#
+Copyright (C) SPREAD WORKS Inc. All Rights Reserved.
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+<script>
+$(function() {
+    var image_file_name_area_html = ''
+        + '<div class="photo_files text-center w-100 py-5 border-ec-dashed mb-2 rounded" id="drag-drop-area">'
+        + '<i class="fa fa-cloud-upload fa-4x text-ec-lightGray" aria-hidden="true"></i>'
+        + '<p class="font-weight-bold text-ec-gray">{{ 'taba_custom_fields.form.file.drag_msg'|trans|raw }}</p>'
+        + '<a id="file_upload" class="with-icon btn btn-ec-regular mr-2">{{ 'taba_custom_fields.form.file.upload'|trans }}</a>'
+        + '</div>'
+        + '<div class="tabacustomfields_thumb c-form__fileUploadThumbnails ui-sortable"></div>'
+        + '<div id="progress" class="progress progress-striped active" style="display:none;"><div class="progress-bar progress-bar-info"></div></div>'
+        + '<input type="file" style="display:none;">';
+    var document_file_name_area_html = ''
+        + '<div class="photo_files text-center w-100 py-5 border-ec-dashed mb-2 rounded" id="drag-drop-area">'
+        + '<i class="fa fa-cloud-upload fa-4x text-ec-lightGray" aria-hidden="true"></i>'
+        + '<p class="font-weight-bold text-ec-gray">{{ 'taba_custom_fields.form.file.drag_msg'|trans|raw }}</p>'
+        + '<a id="file_upload" class="with-icon btn btn-ec-regular mr-2">{{ 'taba_custom_fields.form.file.upload'|trans }}</a>'
+        + '</div>'
+        + '<div class="tabacustomfields_thumb c-form__fileUploadThumbnails ui-sortable"></div>'
+        + '<div id="progress" class="progress progress-striped active" style="display:none;"><div class="progress-bar progress-bar-info"></div></div>'
+        + '<input type="file" style="display:none;">';
+    var uploaded_image_html = ''
+        + '<div class="c-form__fileUploadThumbnail" style="background-image:url(__path__);">'
+        + '<span class="delete-image"><i class="fa fa-times" aria-hidden="true"></i></span>'
+        + '</div>';
+    var uploaded_document_html = ''
+        + '<div class="c-form__fileUploadThumbnail fa fa-file fa-5x" style="background-image:none;">'
+        + '<span class="delete-image"><i class="fa fa-times" aria-hidden="true"></i></span>'
+        + '</div>';
+
+    $('.custom_field_file_name').each(function(){
+        if ($(this).data('column-id') === undefined) { return; }
+        // バリデートはサーバ側で行う
+        $(this).removeAttr('required');
+        var column_id = $(this).data('column-id');
+        var file_type = $(this).data('file-type');
+        var mime_type ="";
+        
+        var input_file_name = '#{{ bilde_form_type_name }}_plg_custom_field_' + column_id;
+        var file_upload_area_id = 'custom_field_file_area_' + column_id;
+        var file_upload_area_name = '#' + file_upload_area_id;
+
+        $('<div id="'+ file_upload_area_id +'"></div>').insertAfter(this);
+        if (file_type === "image") {
+            $(image_file_name_area_html).appendTo($(file_upload_area_name));      
+        } else {
+            $(document_file_name_area_html).appendTo($(file_upload_area_name));      
+        }
+        
+
+        if ($(this).data('mime-type')) {
+            $('<p class="help-block">__HELPTEXT__</p>'.replace(/__HELPTEXT__/g,$(this).data('mime-type'))).appendTo($(file_upload_area_name));  
+        }
+        if ($(this).data('image-pixels')) {
+            $('<p class="help-block">__HELPTEXT__</p>'.replace(/__HELPTEXT__/g,$(this).data('image-pixels'))).appendTo($(file_upload_area_name));  
+        }
+        if ($(this).data('max-size')) {
+            $('<p class="help-block">__HELPTEXT__</p>'.replace(/__HELPTEXT__/g,$(this).data('max-size'))).appendTo($(file_upload_area_name));  
+        }
+
+        // 既存のファイルがあれば、ファイルを登録
+        if ($(this).val()) {
+            var path = '{{  asset('dummy.jpg', 'save_image') }}'.replace('dummy.jpg', $(this).val());
+            if (file_type === "image") {
+                var newImage = new Image();
+                // 画像があった時の処理
+                newImage.onload = function() {
+                    var add_tag = uploaded_image_html.replace(/__path__/g,path);
+                    $(file_upload_area_name + ' .tabacustomfields_thumb').html(add_tag);
+                }
+                newImage.src = path;
+            } else {
+                $.get(path, function(){
+                    // ファイルがあった場合の処理
+                    var add_tag = uploaded_document_html.replace(/__path__/g,path);
+                    $(file_upload_area_name + ' .tabacustomfields_thumb').html(add_tag);
+                });
+            }
+        }
+
+        // 削除
+        $(file_upload_area_name + ' .tabacustomfields_thumb').on("click",".delete-image",function () {
+            $(this).parent('.c-form__fileUploadThumbnail').remove();
+            $(input_file_name).val('');
+        });
+
+        // アップロード
+        $('#custom_field_file_area_'+ column_id +' :file').fileupload({
+            url: "{{ url(upload_urlpath_route) }}",
+            dropZone: $('#custom_field_file_area_'+ column_id),
+            paramName: '{{ formtype_name }}[file]',
+            limitMultiFileUploads: 1,
+            type: "post",
+            sequentialUploads: true,
+            dataType: 'json',
+            formData: {
+                "{{ formtype_name }}[column_id]": column_id,
+                "{{ formtype_name }}[entity]": "{{ entity }}",
+                "{{ formtype_name }}[{{ csrf_token_name }}]": "{{ csrf_token_key }}",
+            },
+            done: function (e, data) {
+                $(file_upload_area_name + ' #progress').hide();
+                if (data.result.errors) {
+                    alert(data.result.errors.join('\n'));
+                } else if (data.result.file) {
+                    var path = '{{  asset('dummy.jpg', 'temp_image') }}'.replace('dummy.jpg', data.result.file);
+                    if (file_type === "image") {
+                        var add_tag = uploaded_image_html.replace(/__path__/g,path);
+                    } else {
+                        var add_tag = uploaded_document_html.replace(/__path__/g,path);
+                    }
+                    $(file_upload_area_name + ' .tabacustomfields_thumb').html(add_tag);
+                    $(input_file_name).val(data.result.file);
+                }
+            },
+            fail: function (e, data) {
+                alert('{{ 'taba_custom_fields.admin.file_upload.failed_msg'|trans }}');
+            },
+            always: function (e, data) {
+                $(file_upload_area_name + ' #progress').hide();
+                $(file_upload_area_name + ' #progress .progress-bar').width('0%');
+            },
+            start: function (e, data) {
+                $(file_upload_area_name + ' #progress').show();
+            },
+            maxFileSize: 10000000,
+            maxNumberOfFiles: 10,
+            progressall: function (e, data) {
+                $(file_upload_area_name + ' #progress .progress-bar').css('width',(parseInt(data.loaded / data.total * 100, 10)) + '%');
+            },
+            processalways: function (e, data) {
+                if (data.files.error) {
+                    alert("{{ 'taba_custom_fields.admin.file_upload.failed_msg'|trans }}");
+                }
+            }
+        });
+        $(file_upload_area_name + ' #file_upload').on('click', function () {
+            $(file_upload_area_name +' :file').click();
+        });
+    });
+});
+</script>

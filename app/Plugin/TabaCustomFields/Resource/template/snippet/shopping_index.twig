@@ -1,0 +1,36 @@
+<script>
+    $(function () {
+        $('.ec-orderRole__detail').append($('#tabacustomfields_shopping_index'));
+    });
+</script>
+<div id="tabacustomfields_shopping_index">
+    {% for f in form if f.vars.eccube_form_options.auto_render and f.vars.name matches '[^plg_custom_field*]' %}
+
+    <div class="ec-tabaCustomFields">
+        {% if f.vars.eccube_form_options.form_theme %}
+            {% form_theme f f.vars.eccube_form_options.form_theme %}
+            {{ form_row(f) }}
+        {% else %}
+        <div class="ec-rectHeading">
+            <h2>{{ form_label(f) }}</h2>
+        </div>
+
+        {% set FORM = form_widget(f) %}
+        {% if  FORM matches '{^.*(textarea|text).*}' %}
+        <div class="ec-input">
+        {% elseif FORM matches '{^.*radio.*}' %}
+        <div class="ec-radio">
+        {% elseif FORM matches '{^.*select.*}' %}
+        <div class="ec-select">
+        {% elseif FORM matches '{^.*checkbox.*}' %}
+        <div class="ec-checkbox">
+        {% else %}
+        <div>
+        {% endif %}
+            {{ FORM|raw }}
+            {{ form_errors(f) }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>

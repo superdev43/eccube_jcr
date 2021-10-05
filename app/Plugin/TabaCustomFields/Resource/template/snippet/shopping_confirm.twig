@@ -1,0 +1,30 @@
+<script>
+    $(function () {
+        $('.ec-orderRole__detail').append($('#tabacustomfields_shopping_confirm'));
+    });
+</script>
+<div id="tabacustomfields_shopping_confirm">
+    {% for f in form if f.vars.eccube_form_options.auto_render and f.vars.name matches '[^plg_custom_field*]' %}
+
+    <div class="ec-tabaCustomFields">
+        {% if f.vars.eccube_form_options.form_theme %}
+            {% form_theme f f.vars.eccube_form_options.form_theme %}
+            {{ form_row(f) }}
+        {% else %}
+        <div class="ec-rectHeading">
+            <h2>{{ form_label(f) }}</h2>
+        </div>
+        <div>
+            <div>
+             {% if (f.vars.data is iterable) %}
+                {{ f.vars.data|join(', ') }}
+            {% else %}
+                {{ f.vars.data }}
+            {% endif %}
+            {{ form_widget(f, {attr: {readonly: 'readonly', class: 'hide'}}) }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>

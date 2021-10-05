@@ -1,0 +1,37 @@
+{#
+Copyright (C) SPREAD WORKS Inc. All Rights Reserved.
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends '@admin/default_frame.twig' %}
+{% use "bootstrap_3_layout.html.twig" %}
+
+{% set body_class = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_page' %}
+{% set menus = [constant('PLUGIN_CATEGORY_ID', TabaCustomFieldsConstants), constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants), constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_order_csv_manage'] %}
+{% set bind_prefx = constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants) %}
+{% set tag_id_prefix = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_list' %}
+{% block title %}{{ constant('PAGE_TITLE', TabaCustomFieldsConstants)|raw }}{% endblock %}
+{% block sub_title %}注文CSV{% endblock %}
+
+
+{% block main %}
+    <div class="c-contentsArea__cols">
+        <div class="c-contentsArea__primaryCol">
+            <div class="c-primaryCol">
+                <div class="card rounded border-0 mb-4">
+                    <div class="card-footer">
+                        <div id="{{ tag_id_prefix }}__footer">
+                            <div id="{{ tag_id_prefix }}__insert_button" class="text-center btn_area">
+                                <a href="{{ url(constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants)~'customer_csv_export') }}" class="btn btn-ec-regular">
+                                    CSVダウンロード
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

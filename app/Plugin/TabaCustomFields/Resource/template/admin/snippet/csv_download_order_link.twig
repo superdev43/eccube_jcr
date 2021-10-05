@@ -1,0 +1,8 @@
+{% set const = TabaCustomFieldsConstants %}
+<script>
+    $(function () {
+        const link = "{{ url(constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants)~'order_csv_export') }}";
+        const text = "受注 追加項目DL";
+        $('#orderCsvDownload').before('<a class="dropdown-item" href="' + link + '">' + text + '</a>');
+    });
+</script>

@@ -1,0 +1,71 @@
+{#
+This file is part of EC-CUBE
+
+Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+
+http://www.ec-cube.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% form_theme form 'Form/form_div_layout.twig' %}
+
+<div class="ec-headerSearch">
+	<form method="get" class="searchform" action="{{ path('product_list') }}">
+		<div class="ec-headerSearch__keyword">
+			<div class="ec-input">
+				{{ form_widget(form.name, {'id': null, 'attr': {'class': 'search-name', 'placeholder' : 'キーワードを入力' }}
+				) }}
+				<div class="search__category_icon">
+					<div class="ec-headerSearch__category">
+                        <div class="ec-select ec-select_search" style="padding-bottom: 5px;">
+
+                            <a data-toggle="modal" data-target="#delete_modal" data-url="{# ここに削除のためのURLを出力 #}" style="border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #fff; padding-left: 12px; ">
+                                    {# #fff9c2<font▼ #}
+                            </a>
+                        </div>
+
+					</div>
+					<button class="ec-headerSearch__keywordBtn" type="submit">
+						<div class="ec-icon">
+							<img src="/html/user_data/assets/img/common/icon_search.svg" alt="">
+						</div>
+					</button>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+
+<!-- 省略 -->
+
+<div>
+
+	<div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="delete_modal" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div
+				class="modal-content" style="padding-left: 10px; padding-right: 10px">
+
+				<!-- モーダルの内容の出力 -->
+                {{ include('Block/searchFood.twig') }}
+				{# <a href="#" class="btn btn-ec-delete" data-confirm="false" data-method="delete">
+					削除
+				</a> #}
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- 省略 -->
+
+<style>
+.search-name {
+	width: auto!important;
+}
+</style>
+
+
+

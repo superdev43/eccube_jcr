@@ -1,0 +1,1 @@
+{"name":"ec-cube\/JoolenPluginTemplateManager4","version":"1.0.2","description":"\u30d7\u30e9\u30b0\u30a4\u30f3\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u7ba1\u7406\u30d7\u30e9\u30b0\u30a4\u30f3 for EC-CUBE 4.0","type":"eccube-plugin","require":{"ec-cube\/plugin-installer":"~0.0.7"},"extra":{"code":"JoolenPluginTemplateManager4","id":2281}}

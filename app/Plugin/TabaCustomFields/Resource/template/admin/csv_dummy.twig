@@ -1,0 +1,24 @@
+{#
+Copyright (C) SPREAD WORKS Inc. All Rights Reserved.
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends '@admin/default_frame.twig' %}
+
+{% set body_class = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_page' %}
+
+{% set tag_id_prefix = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_list' %}
+{% block title %}{{ constant('PAGE_TITLE', TabaCustomFieldsConstants)|raw }}{% endblock %}
+{% block sub_title %}会員CSV{% endblock %}
+
+
+{% block main %}
+<div id="file_format_box" class="col-md-12">
+    <div id="{{ tag_id_prefix }}__footer" class="row">
+        <div id="{{ tag_id_prefix }}__insert_button" class="col-xs-10 col-xs-offset-1 col-sm-6 col-sm-offset-3 text-center btn_area">
+            <a href="{{ url(constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants)~'product_csv_export') }}" id="download-button" class="btn btn-default">会員CSVダウンロード</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

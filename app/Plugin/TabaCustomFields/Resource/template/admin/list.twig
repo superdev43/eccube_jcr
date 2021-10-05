@@ -1,0 +1,119 @@
+{#
+Copyright (C) SPREAD WORKS Inc. All Rights Reserved.
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends '@admin/default_frame.twig' %}
+{% use "bootstrap_4_layout.html.twig" %}
+
+{% set entity_name = "" %}
+{% for entity in TabaCustomFieldsConstants.TARGET_ENTITY %}
+    {% if target_entity == entity.key %}
+    {% set entity_name = entity.name %}
+    {% endif %}
+{% endfor %}
+
+{% set body_class = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_page' %}
+{% set menus = [constant('PLUGIN_CATEGORY_ID', TabaCustomFieldsConstants), constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants), constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_list_'~target_entity] %}
+{% set bind_prefx = constant('ADMIN_BIND_PREFIX', TabaCustomFieldsConstants) %}
+{% set tag_id_prefix = constant('PLUGIN_CODE_LC', TabaCustomFieldsConstants)~'_list' %}
+{% block title %}{{ constant('PAGE_TITLE', TabaCustomFieldsConstants)|raw }}{% endblock %}
+{% block sub_title %}{{ entity_name|e|trans }}{{ 'taba_custom_fields.admin.list.sub_title'|trans }}{% endblock %}
+
+{% block javascript %}
+<script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.core.min.js', 'admin') }}"></script>
+<script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.widget.min.js', 'admin') }}"></script>
+<script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.mouse.min.js', 'admin') }}"></script>
+<script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.sortable.min.js', 'admin') }}"></script>
+<script>
+$(function() {
+    $(".sortable").sortable({
+        items: 'tr',
+        handle: '.icon_sortable',
+        cursor: 'move',
+        opacity: 0.7,
+        update: function(e, ui) {
+            $.post('{{ path(bind_prefx~'customfields_sort',{target_entity:target_entity}) }}', {
+                sortitem: $(this).sortable('serialize'),
+                {{ constant('Eccube\\Common\\Constant::TOKEN_NAME') }}: "{{ csrf_token }}",
+            });
+        }
+    });
+});
+</script>
+{% endblock javascript %}
+
+{% block main %}
+    <div class="c-contentsArea__cols">
+        <div class="c-contentsArea__primaryCol">
+            <div class="c-primaryCol">
+                <div class="card rounded border-0 mb-4">
+                    <div class="card-body">
+                        {% if not list %}
+                            {{ 'taba_custom_fields.admin.list.no_records'|trans }}
+                        {% else %}
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2"></th>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2">ID</th>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2">{{ 'taba_custom_fields.admin.list.field_name'|trans }}</th>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2">{{ 'taba_custom_fields.admin.list.field_type'|trans }}</th>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2">{{ 'taba_custom_fields.admin.list.display_permission'|trans }}</th>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2">{{ 'taba_custom_fields.admin.list.edit_authority'|trans }}</th>
+                                        <th class="border-top-0 pl-3 pt-2 pb-2"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="sortable">
+                                    <form action="" method="post">
+                                        {% for row in list %}
+                                            <tr id="column_ids_{{ row.getColumnId }}">
+                                                <td class="icon_sortable align-middle pl-2 pt-2 pb-2" style="cursor:move;">
+                                                    <i class="fa fa-bars text-ec-gray"></i>
+                                                </td>
+                                                <td class="align-middle pl-2 pt-2 pb-2">{{ row.getColumnId }}</td>
+                                                <td class="align-middle pl-2 pt-2 pb-2">{{ row.getLabel }}</td>
+                                                <td class="align-middle pl-2 pt-2 pb-2">
+                                                    {{ attribute(TabaCustomFieldsConstants.FIELD_TYPE, row.getFieldType).label|trans }}
+                                                </td>
+                                                <td class="align-middle pl-2 pt-2 pb-2">
+                                                    {{ attribute(TabaCustomFieldsConstants.CUSTOM_FIELDS_FORM_OPTIONS.read_allowed.choices, row.getReadAllowed)|trans }}
+                                                </td>
+                                                <td class="align-middle pl-2 pt-2 pb-2">
+                                                    {{ attribute(TabaCustomFieldsConstants.CUSTOM_FIELDS_FORM_OPTIONS.write_allowed.choices, row.getWriteAllowed)|trans }}
+                                                </td>
+                                                <td class="align-middle pl-2 pt-2 pb-2">
+                                                    <div class="row justify-content-end">
+                                                        <div class="col-auto text-center">
+                                                            <a href="{{ path('tabacustomfields_admin_edit_'~target_entity,{column_id:row.getColumnId}) }}">{{ 'taba_custom_fields.admin.list.edit'|trans }}</a>
+                                                        </div>
+                                                        <div class="col-auto text-center">
+                                                            <a href="{{ path('tabacustomfields_admin_customfields_delete',{target_entity:target_entity,column_id:row.getColumnId}) }}" {{ csrf_token_for_anchor() }} data-method="delete" data-message="{{ 'taba_custom_fields.admin.list.delete_message'|trans }}">
+                                                                {{ 'taba_custom_fields.admin.list.delete'|trans }}
+                                                            </a>
+
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </form>
+                                </tbody>
+                            </table>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div id="{{ tag_id_prefix }}__footer">
+                            <div id="{{ tag_id_prefix }}__insert_button" class="text-center btn_area">
+                                <a href="{{ path(bind_prefx~'regist_'~target_entity) }}" class="btn btn-ec-regular">
+                                    {{ 'taba_custom_fields.admin.list.new_custom_field'|trans }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{# This file is part of BannerManagement4
+
+Copyright(c) U-Mebius Inc. All Rights Reserved.
+
+https://umebius.com/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+<script>
+    $(function () {
+        $('.main_visual').slick('unslick')
+        $('.main_visual').html('')
+        {% for Banner in TopBanners %}
+        var $slide = $("<div class='item slick-slide'></div>");
+        var $img = $("<img src='{{ asset('banner/' ~ Banner.file_name, 'save_image') }}'>");
+        $img.attr('alt', '{{ Banner.alt }}')
+        {% if Banner.url %}
+        var $link = $('<a>').attr('href', '{{ Banner.url }}');
+        {% if Banner.link_method %}
+        $link.attr('target', '_blank');
+        {% endif %}
+        $link.html($img).appendTo($slide);
+        {% else %}
+        $img.appendTo($slide);
+        {% endif %}
+        $('.main_visual').append($slide)
+        {% endfor %}
+        var slider = $('.main_visual').slick({
+            dots: true,
+            arrows: false,
+            autoplay: true,
+            autoplaySpeed: 7000,
+            pauseOnHover: true,
+            speed: 800,
+            centerMode: true,
+            variableWidth: true,
+            responsive: [
+                {
+                    breakpoint: 1106,
+                    settings: {
+                        centerMode: false,
+                        variableWidth: false,
+                    }
+                },
+            ]
+        });
+
+        $('.main_visual').css({
+            visibility: 'visible'
+        })
+        slider.slick('setPosition');
+    })
+</script>

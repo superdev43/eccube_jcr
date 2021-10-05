@@ -1,0 +1,57 @@
+<div class="header-add">
+    <div class="header-add-inner">
+        <div class="ec-headerNaviRole__left">
+            <h1 class="logo"><a href="/"><img src="/html/user_data/assets/img/common/logo.svg"/></a></h1>
+            <div class="ec-headerRole__navSP">
+                {{ include('Block/nav_sp.twig') }}
+            </div>
+        </div>
+        <div class="ec-headerNaviRole__search">
+            {{ render(path('block_search_product')) }}
+        </div>
+        <div class="ec-headerNaviRole__right">
+            <div class="ec-headerNaviRole__nav">
+                <div class="ec-headerNav">
+                    {% if is_granted('ROLE_USER') %}
+                        <div class="ec-headerNav__item">
+                            <a href="{{ url('logout') }}">
+                                <span class="ec-headerNav__itemLink">{{ 'ログアウト'|trans }}</span>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="ec-headerNav__item">
+                            <a href="{{ url('mypage_login') }}">
+                                <span class="ec-headerNav__itemLink">{{ 'ログイン'|trans }}</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                    <div class="ec-headerNav__item">
+                        <a href="{{ url('mypage_login') }}">
+                            <img src="/html/user_data/assets/img/common/icon_contact.svg"/>
+                            <span class="ec-headerNav__itemLink">{{ 'お問い合せ'|trans }}</span>
+                        </a>
+                    </div>
+                    <div class="ec-headerNav__item">
+                        <a href="##">
+                            <img src="/html/user_data/assets/img/common/icon_cart.svg"/>
+                            <span class="ec-headerNav__itemLink">{{ 'カート'|trans }}</span>
+                        </a>
+                    </div>
+                    <div class="ec-headerNav__item">
+                        <a href="##">
+                            <img src="/html/user_data/assets/img/common/icon_menu.svg"/>
+                            <span class="ec-headerNav__itemLink">{{ 'メニュー'|trans }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="header-search-text">
+        <a href="##">ランキング</a>
+        <a href="##">お料理ジャンル</a>
+        <a href="##">おすすめ</a>
+        <a href="##">価格帯</a>
+        <a href="##">お試し料理</a>
+    </div>
+</div>
