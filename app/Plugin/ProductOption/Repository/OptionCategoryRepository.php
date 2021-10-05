@@ -38,6 +38,19 @@ class OptionCategoryRepository extends AbstractRepository
         return $OptionCategories;
     }
 
+    public function getOptionValue($Option)
+    {
+        $qb = $this->createQueryBuilder('oc')
+                ->orderBy('oc.sort_no', 'DESC');
+        if ($Option) {
+            $qb->where('oc.Option = :Option')->setParameter('Option', $Option);
+        }
+        $OptionCategory = $qb->getQuery()
+                ->getSingleResult();
+
+        return $OptionCategory;
+    }
+
     public function save($OptionCategory)
     {
         $em = $this->getEntityManager();

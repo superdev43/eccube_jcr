@@ -4,7 +4,8 @@
 {% macro stars(positive, negative) %}
     {% set positive_stars = ["", "★", "★★", "★★★", "★★★★", "★★★★★"] %}
     {% set negative_stars = ["", "☆", "☆☆", "☆☆☆", "☆☆☆☆", "☆☆☆☆☆"] %}
-    {{ positive_stars[positive] }}{{ negative_stars[negative] }}
+    {{ positive_stars[positive] }}
+    {{ negative_stars[negative] }}
 {% endmacro %}
 
 {% set FirstRankProductId = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getFirstProductId() %}
@@ -15,13 +16,13 @@
 {% set FirstRankCustomField = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getFields(FirstRankProduct.id) %}
 {% set now_date = 'now'|date('c') %}
 
-    {% set day1 = FirstRankCustomField.plg_field_content6 - 1 %}
-    {% set day2 = FirstRankCustomField.plg_field_content6 %}
-    {% set res1 = now_date |date_modify('+' ~ day1 ~ 'day')|date('n/j') %}
-    {% set res11 = now_date |date_modify('+' ~ day1 ~ 'day')|date('w') %}
-    {% set res2 = now_date|date_modify('+' ~ day2 ~ 'day')|date('n/j') %}
-    {% set res22 = now_date |date_modify('+' ~ day2 ~ 'day')|date('w') %}
-    
+{% set day1 = FirstRankCustomField.plg_field_content6 - 1 %}
+{% set day2 = FirstRankCustomField.plg_field_content6 %}
+{% set res1 = now_date |date_modify('+' ~ day1 ~ 'day')|date('n/j') %}
+{% set res11 = now_date |date_modify('+' ~ day1 ~ 'day')|date('w') %}
+{% set res2 = now_date|date_modify('+' ~ day2 ~ 'day')|date('n/j') %}
+{% set res22 = now_date |date_modify('+' ~ day2 ~ 'day')|date('w') %}
+
 {% set weekday = ["日", "月", "火", "水", "木", "金", "土" ] %}
 
 {% set FirstRankReviewProduct = repository('Plugin\\ProductReview4\\Entity\\ProductReview').getAvgAll(FirstRankProduct) %}
@@ -60,94 +61,208 @@
 
 </style>
 
-<div class="first-ranking" >
-    <div class="home-title sp"><h2>今週のランキング１位</h2></div>
+<div class="first-ranking">
+    <div class="home-title sp">
+        <h2>
+            今週のランキング１位
+        </h2>
+    </div>
     <div class="first-ranking-box">
         <div class="first-ranking-img">
             <div class="first-ranking-slider ranking-slider">
                 {% for Image in FirstRankProductImages %}
-                    <div><img src="{{ asset(Image.file_name, 'save_image') }}"></div>
-                {% else %}
-                    <div><img src="{{ asset(''|no_image_product, 'save_image') }}"></div>
-                {% endfor %}
-            </div>
-            <div class="first-ranking-slider-nav ranking-nav">
-                {% for Image in FirstRankProductImages %}
-                    <div><img src="{{ asset(Image.file_name, 'save_image') }}"></div>
-                {% else %}
-                    <div><img src="{{ asset(''|no_image_product, 'save_image') }}"></div>
-                {% endfor %}
-            </div>
-        </div>
-        
-     
-        <div class="first-ranking-text">
-            <h2 class="pc">今週のランキング１位</h2>
-            {# <div class="first-ranking-name"><img src="./html/user_data/assets/img/home/product-title01.png"/></div> #}
-            <div class="first-ranking-name">{{ FirstRankProduct.name }}</div>
-            {# <div class="first-ranking-star"><span>レビュー評価</span><img src="./html/user_data/assets/img/home/star4.6.png"/></div> #}
-            
-            <div class="first-ranking-star"><span class="recommend_average">{{ stars.stars(positive_avg_star, nagative_avg_star) }}</span></div>
-            <div class="Stars_first" style="--rating: 5; font-size: 25px; display: flex;
-    justify-content: flex-end;" aria-label="Rating of this product is 2.3 out of 5.">{{ float_avg_star }}</div>
-            {# <p class="first-ranking-desc pc">当店のしゃぶしゃぶに使う魚は、一切れ一切れ丁寧に職人が切り付けを行い 鮮度がいいうちに瞬間冷凍しております</p> #}
-            <p class="first-ranking-desc pc">{{ FirstRankProduct.description_detail }}</p>
-            
-            <div class="icon-box">
-                <div class="icon-link-list">
-                {# tietie 2021.9.23 gift function add #}
-                {% if FirstRankCustomField.plg_field_content9 == '有効' %}
-                    <div><a href="##"><img src="./html/user_data/assets/img/common/icon_gift.svg"/></a></div>
-                {% endif %}
-
-                {% if FirstRankCustomField.plg_field_content10 == '有効' %}
-                    <div><a href="##"><img src="./html/user_data/assets/img/common/icon_coolbin.svg"/></a></div>
-                {% endif %}
-                    <div><a href="##"><img src="./html/user_data/assets/img/common/icon_favorite.svg"/></a></div>
-                </div>
-                <div class="postfree">
-                    <img src="./html/user_data/assets/img/common/icon_postfree.png"/>
-                                        <p>{% if now_date | date('h') > 6  %}{{res2}}{% else %}{{res1}}{% endif %}<span>{% if now_date | date('h') > 6  %}（{{weekday[res22]}}){% else %}({{weekday[res11]}}){% endif %}</span></p>
-                </div>
-                
-            </div>
-            <div class="first-ranking-price">
-            {% if is_granted('ROLE_USER') %}
-                    {% if app.user.point|number_format > 0 %}
-                        
-                        {% set user_point = FirstRankProductClass.price02 - app.user.point %}
-                        {% if user_point < 0 %}
-                            {% set user_point = 0 %}
-                        {% endif %}
-                        {# {{ dump(user_point) }} #}
-                        {# {{dump(user_point)}} #}
-                        <p style="font-size: 16px;">通常販売価格<span style="font-size: 21px;"><del> {{ FirstRankProductClass.price02 | number_format }}円 </del></span>（税込）</p>
-                        <p style="font-size: 16px;">ポイント通用価格<span style="font-size: 21px;"> {{ user_point | number_format }}円</span>（税込）</p>          
-                        <p style="font-size: 16px; background-color: red; color: yellow; padding-right: 10px;"><label style=" width: 25px; text-align: center; border-radius: 50%; border: 2px solid yellow;">P</label><span style="padding-left: 5px">マイポイント</span><span style="padding-right: 5px; font-size: 22px;"> {{ '%point%pt'|trans({ '%point%': app.user.point|number_format}) }}</span></p>       
+                    <div>
+                        <img src="{{ asset(Image.file_name, 'save_image') }}"></div>
                     {% else %}
-                        <p style="font-size: 16px;">通常販売価格<span style="font-size: 22px;">{{ FirstRankProductClass.price02 | number_format }}円</span>（税込）</p>   
-                        <p style="font-size: 16px; background-color: red; color: yellow; padding-right: 10px;"><label style=" width: 25px; text-align: center; border-radius: 50%; border: 2px solid yellow;">P</label><span style="padding-left: 5px">マイポイント</span><span style="padding-right: 5px; font-size: 22px;"> {{ '%point%pt'|trans({ '%point%': app.user.point|number_format}) }}</span></p>                         
-                    {% endif %}
-            {% else %}
-                <h4>通常販売価格<span>{{ FirstRankProductClass.price02 | number_format }}<span>円</span></span>（税込）</h4>
-                <p class="pc">会員登録して購入するとポイントを獲得できます。</p>
-            {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-<div class="contact-content">
-    <div class="contact-box contact-box1">
-        <h4>ようこそ</h4>
-        <p>GOURMET RESORTでワンランク上のディナーを</p>
-        <a href="##">ログイン</a>
-        <div class="contact-regist"><a href="##">新規登録</a></div>
-    </div>
-    <div class="contact-box contact-box2">
-        <h3>おすすめ</h3>
-    </div>
-</div>
-<script>
+                        <div>
+                            <img src="{{ asset(''|no_image_product, 'save_image') }}"></div>
+                        {% endfor %}
+                    </div>
+                    <div class="first-ranking-slider-nav ranking-nav">
+                        {% for Image in FirstRankProductImages %}
+                            <div>
+                                <img src="{{ asset(Image.file_name, 'save_image') }}"></div>
+                            {% else %}
+                                <div>
+                                    <img src="{{ asset(''|no_image_product, 'save_image') }}"></div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="first-ranking-text">
+                            <h2 class="pc">
+                                今週のランキング１位
+                            </h2>
+                            {# <div class="first-ranking-name"><img src="./html/user_data/assets/img/home/product-title01.png"/></div> #}
+                            <div class="first-ranking-name">
+                                {{ FirstRankProduct.name }}
+                            </div>
+                            {# <div class="first-ranking-star"><span>レビュー評価</span><img src="./html/user_data/assets/img/home/star4.6.png"/></div> #}
+
+                            <div class="first-ranking-star">
+                                <span class="recommend_average">
+                                    {{ stars.stars(positive_avg_star, nagative_avg_star) }}
+                                </span>
+                            </div>
+                            <div class="Stars_first" style="--rating: 5; font-size: 25px; display: flex;
+                                    justify-content: flex-end;" aria-label="Rating of this product is 2.3 out of 5.">
+                                {{ float_avg_star }}
+                            </div>
+                            {# <p class="first-ranking-desc pc">当店のしゃぶしゃぶに使う魚は、一切れ一切れ丁寧に職人が切り付けを行い 鮮度がいいうちに瞬間冷凍しております</p> #}
+                            <p class="first-ranking-desc pc">
+                                {{ FirstRankProduct.description_detail }}
+                            </p>
+
+                            <div class="icon-box">
+                                <div class="icon-link-list">
+                                    {# tietie 2021.9.23 gift function add #}
+                                    {% if FirstRankCustomField.plg_field_content9 == '有効' %}
+                                        <div>
+                                            <a href="##">
+                                                <img src="./html/user_data/assets/img/common/icon_gift.svg" />
+                                            </a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if FirstRankCustomField.plg_field_content10 == '有効' %}
+                                        <div>
+                                            <a href="##">
+                                                <img src="./html/user_data/assets/img/common/icon_coolbin.svg" />
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <a href="##">
+                                            <img src="./html/user_data/assets/img/common/icon_favorite.svg" />
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="postfree">
+                                    <img src="./html/user_data/assets/img/common/icon_postfree.png" />
+                                    <p>
+                                        {% if now_date | date('h') > 6 %}
+                                            {{ res2 }}
+                                        {% else %}
+                                            {{ res1 }}
+                                        {% endif %}
+                                        <span>
+                                            {% if now_date | date('h') > 6 %}
+                                                （
+                                                {{ weekday[res22] }}
+                                                )
+                                            {% else %}
+                                                (
+                                                {{ weekday[res11] }}
+                                                )
+                                            {% endif %}
+                                        </span>
+                                    </p>
+                                </div>
+
+                            </div>
+                            <div class="first-ranking-price">
+                                {% if is_granted('ROLE_USER') %}
+                                    {% if app.user.point|number_format > 0 %}
+
+                                        {% set user_point = FirstRankProductClass.price02 - app.user.point %}
+                                        {% if user_point < 0 %}
+                                            {% set user_point = 0 %}
+                                        {% endif %}
+                                        {# {{ dump(user_point) }} #}
+                                        {# {{dump(user_point)}} #}
+                                        <p style="font-size: 16px;">
+                                            通常販売価格
+                                            <span style="font-size: 21px;">
+                                                <del>
+                                                    {{ FirstRankProductClass.price02 | number_format }}
+                                                    円 
+                                                </del>
+                                            </span>
+                                            （税込）
+                                        </p>
+                                        <p style="font-size: 16px;">
+                                            ポイント通用価格
+                                            <span style="font-size: 21px;">
+                                                {{ user_point | number_format }}
+                                                円
+                                            </span>
+                                            （税込）
+                                        </p>
+                                        <p style="font-size: 16px; background-color: red; color: yellow; padding-right: 10px;">
+                                            <label style=" width: 25px; text-align: center; border-radius: 50%; border: 2px solid yellow;">
+                                                P
+                                            </label>
+                                            <span style="padding-left: 5px">
+                                                マイポイント
+                                            </span>
+                                            <span style="padding-right: 5px; font-size: 22px;">
+                                                {{ '%point%pt'|trans({ '%point%': app.user.point|number_format}) }}
+                                            </span>
+                                        </p>
+                                    {% else %}
+                                        <p style="font-size: 16px;">
+                                            通常販売価格
+                                            <span style="font-size: 22px;">
+                                                {{ FirstRankProductClass.price02 | number_format }}
+                                                円
+                                            </span>
+                                            （税込）
+                                        </p>
+                                        <p style="font-size: 16px; background-color: red; color: yellow; padding-right: 10px;">
+                                            <label style=" width: 25px; text-align: center; border-radius: 50%; border: 2px solid yellow;">
+                                                P
+                                            </label>
+                                            <span style="padding-left: 5px">
+                                                マイポイント
+                                            </span>
+                                            <span style="padding-right: 5px; font-size: 22px;">
+                                                {{ '%point%pt'|trans({ '%point%': app.user.point|number_format}) }}
+                                            </span>
+                                        </p>
+                                    {% endif %}
+                                {% else %}
+                                    <h4>
+                                        通常販売価格
+                                        <span>
+                                            {{ FirstRankProductClass.price02 | number_format }}
+                                            <span>
+                                                円
+                                            </span>
+                                        </span>
+                                        （税込）
+                                    </h4>
+                                    <p class="pc">
+                                        会員登録して購入するとポイントを獲得できます。
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-content">
+                    <div class="contact-box contact-box1">
+                        <h4>
+                            ようこそ
+                        </h4>
+                        <p>
+                            GOURMET RESORTでワンランク上のディナーを
+                        </p>
+                        <a href="##">
+                            ログイン
+                        </a>
+                        <div class="contact-regist">
+                            <a href="##">
+                                新規登録
+                            </a>
+                        </div>
+                    </div>
+                    <div class="contact-box contact-box2">
+                        <h3>
+                            おすすめ
+                        </h3>
+                    </div>
+                </div>
+                <script>
  $(function() {
     $('.ranking-slider').slick({
       slidesToShow: 1,
@@ -168,6 +283,9 @@
 
     var real_starValue = '{{ float_avg_star }}';
     $('.Stars_first').css('--rating', real_starValue);
+    if($(window).width()>1000){
+        $('.ec-headerSearch .ec-headerSearch__keyword input[type="search"]').css('border', '1px solid #9c9592');
+    }
 
 
 
@@ -175,3 +293,4 @@
     // console.log(real_starValue);
  });
 </script>
+                

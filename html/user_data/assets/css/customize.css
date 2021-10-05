@@ -155,10 +155,12 @@ a:focus {
     font-size: 14px;
     line-height: 29px;
     height: 31px;
-    padding: 0 165px 0 10px;
-    border: 1px solid #9c9592;
+    padding: 0;
+    border: 0;
     border-radius: 5px;
 }
+
+
 
 .ec-headerSearch .ec-headerSearch__category .ec-select select {
     max-width: 165px;
@@ -208,7 +210,30 @@ a:focus {
     font-size: 13px;
     line-height: 1;
 }
-
+@media screen and (max-width:1000px){
+    .ec-headerSearch .ec-headerSearch__keyword input[type="search"] {
+        border: 0;
+    }
+    .ec-headerNav .ec-headerNav__itemLink{
+        display: none;
+    }
+    .ec-headerNaviRole .ec-headerNaviRole__search{
+        margin-top: 20px;
+    }
+}
+@media screen and (min-width:768px){
+    .ec-headerNaviRole .ec-headerNaviRole__search{        
+        width: 220px;
+    }
+}
+@media screen and (max-width:767px){
+    .ec-headerNaviRole .ec-headerNaviRole__search{
+        display: block;
+        margin-top: 20px;
+        width: 220px;
+    }
+   
+}
 .ec-headerNaviRole__right {
     display: flex;
     align-items: center;

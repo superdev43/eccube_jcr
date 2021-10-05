@@ -1,3 +1,4 @@
+
 {#
 This file is part of EC-CUBE
 
@@ -11,9 +12,79 @@ file that was distributed with this source code.
 {% extends 'default_frame.twig' %}
 
 {% set body_class = 'product_page' %}
+{% import _self as stars %}
 
+{# 星テキスト生成用マクロ #}
+{% macro stars(positive, negative) %}
+    {% set positive_stars = ["", "★", "★★", "★★★", "★★★★", "★★★★★"] %}
+    {% set negative_stars = ["", "☆", "☆☆", "☆☆☆", "☆☆☆☆", "☆☆☆☆☆"] %}
+    {{ positive_stars[positive] }}{{ negative_stars[negative] }}
+{% endmacro %}
+
+
+{% set FirstRankProduct = Product %}
+{% set FirstRankProductClass = repository('Eccube\\Entity\\ProductClass').getProductClass(FirstRankProduct.id) %}
+
+{% set FirstRankCustomField = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getFields(FirstRankProduct.id) %}
+{% set now_date = 'now'|date('c') %}
+
+    {% set day1 = FirstRankCustomField.plg_field_content6 - 1 %}
+    {% set day2 = FirstRankCustomField.plg_field_content6 %}
+    {% set res1 = now_date |date_modify('+' ~ day1 ~ 'day')|date('n/j') %}
+    {% set res11 = now_date |date_modify('+' ~ day1 ~ 'day')|date('w') %}
+    {% set res2 = now_date|date_modify('+' ~ day2 ~ 'day')|date('n/j') %}
+    {% set res22 = now_date |date_modify('+' ~ day2 ~ 'day')|date('w') %}
+    
+{% set weekday = ["日", "月", "火", "水", "木", "金", "土" ] %}
+
+{% set FirstRankReviewProduct = repository('Plugin\\ProductReview4\\Entity\\ProductReview').getAvgAll(FirstRankProduct) %}
+{# {% set positive_avg_star =  FirstRankReviewProduct.recommend_avg | round %} #}
+
+{% set positive_avg_star =  FirstRankCustomField.plg_field_content7 | round %}
+{% set nagative_avg_star = 5 - positive_avg_star %}
+{% set float_avg_star = FirstRankCustomField.plg_field_content7 %}
+
+{% set FirstRankProductImages = repository('Eccube\\Entity\\ProductImage').getProductImages(FirstRankProduct.id) %}
+{% set FirstRecommandProducts = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getFirstRecommandProducts() %}
+{% set RankProducts = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getRankProducts() %}
 {% block stylesheet %}
 	<style>
+		@charset "UTF-8";
+		:root {
+		--star-size: 60px;
+		--star-color: #fff;
+		--star-background: #fc0;
+		}
+		.Stars_reco {
+		--percent: calc(var(--rating) / 5 * 100%);
+		display: inline-block;
+		font-size: var(--star-size);
+		font-family: Times;
+		line-height: 1;
+		}
+		.Stars_reco::before {
+		content: "★★★★★";
+		letter-spacing: 3px;
+		background: linear-gradient(90deg, var(--star-background) var(--percent), var(--star-color) var(--percent));
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: #9e781445;
+		}
+
+		.Stars_first {
+		--percent: calc(var(--rating) / 5 * 100%);
+		display: inline-block;
+		font-size: var(--star-size);
+		font-family: Times;
+		line-height: 1;
+		}
+
+		.Stars_first::before {
+		content: "★★★★★";
+		letter-spacing: 3px;
+		background: linear-gradient(90deg, var(--star-background) var(--percent), var(--star-color) var(--percent));
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: #9e781445;
+		}
 		.slick-slider {
 			margin-bottom: 30px;
 		}
@@ -102,6 +173,32 @@ file that was distributed with this source code.
 		{% endif %}
 	</script>
 	<script>
+		$(function() {
+			$('.ranking-slider').slick({
+			slidesToShow: 1,
+			slidesToScroll: 1,
+			arrows: false,
+			dots: true,
+			fade: true,
+			asNavFor: '.ranking-nav'
+			});
+			$('.ranking-nav').slick({
+			slidesToShow: 4,
+			slidesToScroll: 1,
+			asNavFor: '.ranking-slider',
+			dots: false,
+			centerMode: false,
+			focusOnSelect: true
+			});
+
+			var real_starValue = '{{ float_avg_star }}';
+			$('.Stars_first').css('--rating', real_starValue);
+
+
+
+
+			// console.log(real_starValue);
+		});
 		$(function() {
 			// bfcache無効化
 			$(window).bind('pageshow', function(event) {
@@ -225,130 +322,138 @@ file that was distributed with this source code.
 	
 		<div class="first-ranking product-details">
 
-			<div class="ec-grid2">
-				<div class="ec-grid2__cell">
-					<div class="ec-sliderItemRole">
-						<div class="item_visual">
-							{% for ProductImage in Product.ProductImage %}
-								<div class="slide-item"><img src="{{ asset(ProductImage, 'save_image') }}"></div>
-							{% else %}
-								<div class="slide-item"><img src="{{ asset(''|no_image_product, 'save_image') }}"/></div>
-							{% endfor %}
-						</div>
-						<div class="item_nav">
-							{% for ProductImage in Product.ProductImage %}
-								<div class="slideThumb" data-index="{{ loop.index0 }}"><img src="{{ asset(ProductImage, 'save_image') }}"></div>
-							{% endfor %}
-						</div>
-					</div>
-				</div>
-				<div class="ec-grid2__cell">
-					<div class="ec-productRole__profile">
-						{# 商品名 #}
-						<div class="ec-productRole__title">
-							<h2 class="ec-headingTitle">{{ Product.name }}</h2>
-						</div>
-						{# タグ #}
-						<ul class="ec-productRole__tags">
-							{% for Tag in Product.Tags %}
-								<li class="ec-productRole__tag tag_{{ Tag.id }}">{{ Tag }}</li>
-							{% endfor %}
-						</ul>
-						{# 通常価格 #}
-						{% if Product.hasProductClass -%}
-							<div class="ec-productRole__priceRegular">
-								{% if Product.getPrice01Min is not null and Product.getPrice01IncTaxMin == Product.getPrice01IncTaxMax %}
-									<span class="ec-productRole__priceRegularPrice">{{ '通常価格'|trans }}：<span class="price01-default">{{ Product.getPrice01IncTaxMin|price }}</span></span>
-									<span class="ec-productRole__priceRegularTax">{{ '税込'|trans }}</span>
-								{% elseif Product.getPrice01Min is not null and Product.getPrice01Max is not null %}
-									<span class="ec-productRole__priceRegularPrice">{{ '通常価格'|trans }}：<span class="price01-default">{{ Product.getPrice01IncTaxMin|price }}～ {{ Product.getPrice01IncTaxMax|price }}</span></span>
-									<span class="ec-productRole__priceRegularTax">{{ '税込'|trans }}</span>
-								{% endif %}
-							</div>
-						{% else %}
-							{% if Product.getPrice01Max is not null %}
-								<span class="ec-productRole__priceRegularPrice">{{ '通常価格'|trans }}：{{ Product.getPrice01IncTaxMin|price }}</span>
-								<span class="ec-productRole__priceRegularTax">{{ '税込'|trans }}</span>
-							{% endif %}
-						{% endif %}
-						{# 販売価格 #}
-						<div class="ec-productRole__price">
-							{% if Product.hasProductClass -%}
-								{% if Product.getPrice02IncTaxMin == Product.getPrice02IncTaxMax %}
-									<div class="ec-price">
-										<span class="ec-price__price price02-default">{{ Product.getPrice02IncTaxMin|price }}</span>
-										<span class="ec-price__tax">{{ '税込'|trans }}</span>
-									</div>
+			<div class="first-ranking" >
+				<div class="home-title sp"><h2>{{ FirstRankProduct.name }}</h2></div>
+					{# タグ #}
+					
+					<div class="first-ranking-box">
+						<div class="first-ranking-img">
+							<div class="first-ranking-slider ranking-slider">
+								{% for Image in FirstRankProductImages %}
+									<div><img src="{{ asset(Image.file_name, 'save_image') }}"></div>
 								{% else %}
-									<div class="ec-price">
-										<span class="ec-price__price price02-default">{{ Product.getPrice02IncTaxMin|price }} ～ {{ Product.getPrice02IncTaxMax|price }}</span>
-										<span class="ec-price__tax">{{ '税込'|trans }}</span>
-									</div>
-								{% endif %}
-							{% else %}
-								<div class="ec-price">
-									<span class="ec-price__price">{{ Product.getPrice02IncTaxMin|price }}</span>
-									<span class="ec-price__tax">{{ '税込'|trans }}</span>
-								</div>
-							{% endif %}
-						</div>
-						{# 商品コード #}
-						{% if Product.code_min is not empty %}
-							<div class="ec-productRole__code">
-								{{ '商品コード'|trans }}： <span class="product-code-default">{{ Product.code_min }}{% if Product.code_min != Product.code_max %} ～ {{ Product.code_max }}{% endif %}</span>
-							</div>
-						{% endif %}
-						{# 関連カテゴリ #}
-						{% if Product.ProductCategories is not empty %}
-							<div class="ec-productRole__category">
-								<div>{{ '関連カテゴリ'|trans }}</div>
-								{% for ProductCategory in Product.ProductCategories %}
-									<ul>
-										<li>
-											{% for Category in ProductCategory.Category.path %}
-												<a href="{{ url('product_list') }}?category_id={{ Category.id }}">{{ Category.name }}</a> {%- if loop.last == false %}
-												<span>＞</span>{% endif -%}
-											{% endfor %}
-										</li>
-									</ul>
+									<div><img src="{{ asset(''|no_image_product, 'save_image') }}"></div>
 								{% endfor %}
 							</div>
-						{% endif %}
-						<form action="{{ url('product_add_cart', {id:Product.id}) }}" method="post" id="form1" name="form1">
-							{% if Product.stock_find %}
-								<div class="ec-productRole__actions">
-									{% if form.classcategory_id1 is defined %}
-										<div class="ec-select">
-											{{ form_widget(form.classcategory_id1) }}
-											{{ form_errors(form.classcategory_id1) }}
-										</div>
-										{% if form.classcategory_id2 is defined %}
-											<div class="ec-select">
-												{{ form_widget(form.classcategory_id2) }}
-												{{ form_errors(form.classcategory_id2) }}
-											</div>
+							<div class="first-ranking-slider-nav ranking-nav">
+								{% for Image in FirstRankProductImages %}
+									<div><img src="{{ asset(Image.file_name, 'save_image') }}"></div>
+								{% else %}
+									<div><img src="{{ asset(''|no_image_product, 'save_image') }}"></div>
+								{% endfor %}
+							</div>
+						</div>
+						
+					
+						<div class="first-ranking-text">
+							<h2 class="pc">{{ FirstRankProduct.name }}</h2>
+							<ul class="ec-productRole__tags">
+									{% for Tag in FirstRankProduct.Tags %}
+										<li class="ec-productRole__tag tag_{{ Tag.id }}">{{ Tag }}</li>
+									{% endfor %}
+							</ul>
+							{# <div class="first-ranking-name"><img src="/html/user_data/assets/img/home/product-title01.png"/></div> #}
+							{# <div class="first-ranking-star"><span>レビュー評価</span><img src="/html/user_data/assets/img/home/star4.6.png"/></div> #}
+							
+							<div class="first-ranking-star"><span class="recommend_average">{{ stars.stars(positive_avg_star, nagative_avg_star) }}</span></div>
+							<div class="Stars_first" style="--rating: 5; font-size: 25px; display: flex;
+					justify-content: flex-end;" aria-label="Rating of this product is 2.3 out of 5.">{{ float_avg_star }}</div>
+							{# <p class="first-ranking-desc pc">当店のしゃぶしゃぶに使う魚は、一切れ一切れ丁寧に職人が切り付けを行い 鮮度がいいうちに瞬間冷凍しております</p> #}
+							{# 関連カテゴリ #}
+							{% if Product.ProductCategories is not empty %}
+								<div class="ec-productRole__category">
+									<div>{{ '関連カテゴリ'|trans }}</div>
+									{% for ProductCategory in Product.ProductCategories %}
+										<ul>
+											<li>
+												{% for Category in ProductCategory.Category.path %}
+													<a href="{{ url('product_list') }}?category_id={{ Category.id }}">{{ Category.name }}</a> {%- if loop.last == false %}
+													<span>＞</span>{% endif -%}
+												{% endfor %}
+											</li>
+										</ul>
+									{% endfor %}
+								</div>
+							{% endif %}
+							<p class="first-ranking-desc pc">{{ FirstRankProduct.description_detail }}</p>
+							
+							<div class="icon-box">
+								<div class="icon-link-list">
+								{# tietie 2021.9.23 gift function add #}
+								{% if FirstRankCustomField.plg_field_content9 == '有効' %}
+									<div><a href="##"><img src="/html/user_data/assets/img/common/icon_gift.svg"/></a></div>
+								{% endif %}
+
+								{% if FirstRankCustomField.plg_field_content10 == '有効' %}
+									<div><a href="##"><img src="/html/user_data/assets/img/common/icon_coolbin.svg"/></a></div>
+								{% endif %}
+									<div><a href="##"><img src="/html/user_data/assets/img/common/icon_favorite.svg"/></a></div>
+								</div>
+								<div class="postfree">
+									<img src="/html/user_data/assets/img/common/icon_postfree.png"/>
+														<p>{% if now_date | date('h') > 6  %}{{res2}}{% else %}{{res1}}{% endif %}<span>{% if now_date | date('h') > 6  %}（{{weekday[res22]}}){% else %}({{weekday[res11]}}){% endif %}</span></p>
+								</div>
+								
+							</div>
+							<div class="first-ranking-price">
+							{% if is_granted('ROLE_USER') %}
+									{% if app.user.point|number_format > 0 %}
+										
+										{% set user_point = FirstRankProductClass.price02 - app.user.point %}
+										{% if user_point < 0 %}
+											{% set user_point = 0 %}
 										{% endif %}
+										{# {{ dump(user_point) }} #}
+										{# {{dump(user_point)}} #}
+										<p style="font-size: 16px;">通常販売価格<span style="font-size: 21px;"><del> {{ FirstRankProductClass.price02 | number_format }}円 </del></span>（税込）</p>
+										<p style="font-size: 16px;">ポイント通用価格<span style="font-size: 21px;"> {{ user_point | number_format }}円</span>（税込）</p>          
+										<p style="font-size: 16px; background-color: red; color: yellow; padding-right: 10px;"><label style=" width: 25px; text-align: center; border-radius: 50%; border: 2px solid yellow;">P</label><span style="padding-left: 5px">マイポイント</span><span style="padding-right: 5px; font-size: 22px;"> {{ '%point%pt'|trans({ '%point%': app.user.point|number_format}) }}</span></p>       
+									{% else %}
+										<p style="font-size: 16px;">通常販売価格<span style="font-size: 22px;">{{ FirstRankProductClass.price02 | number_format }}円</span>（税込）</p>   
+										<p style="font-size: 16px; background-color: red; color: yellow; padding-right: 10px;"><label style=" width: 25px; text-align: center; border-radius: 50%; border: 2px solid yellow;">P</label><span style="padding-left: 5px">マイポイント</span><span style="padding-right: 5px; font-size: 22px;"> {{ '%point%pt'|trans({ '%point%': app.user.point|number_format}) }}</span></p>                         
 									{% endif %}
+							{% else %}
+								<h4>通常販売価格<span>{{ FirstRankProductClass.price02 | number_format }}<span>円</span></span>（税込）</h4>
+								<p class="pc">会員登録して購入するとポイントを獲得できます。</p>
+							{% endif %}
+							</div>
+
+							<form action="{{ url('product_add_cart', {id:Product.id}) }}" method="post" id="form1" name="form1">
+								{% if Product.stock_find %}
+								<div class="ec-productRole__actions">
 									<div class="ec-numberInput"><span>{{ '数量'|trans }}</span>
 										{{ form_widget(form.quantity) }}
 										{{ form_errors(form.quantity) }}
 									</div>
-								</div>
-								<div class="ec-productRole__btn">
-									<button type="submit" class="ec-blockBtn--action add-cart">
-										{{ 'カートに入れる'|trans }}
-									</button>
-								</div>
-							{% else %}
-								<div class="ec-productRole__btn">
-									<button type="button" class="ec-blockBtn--action" disabled="disabled">
-										{{ 'ただいま品切れ中です。'|trans }}
-									</button>
-								</div>
-							{% endif %}
+										{% if form.classcategory_id1 is defined %}
+											<div class="ec-select">
+												{{ form_widget(form.classcategory_id1) }}
+												{{ form_errors(form.classcategory_id1) }}
+											</div>
+											{% if form.classcategory_id2 is defined %}
+												<div class="ec-select">
+													{{ form_widget(form.classcategory_id2) }}
+													{{ form_errors(form.classcategory_id2) }}
+												</div>
+											{% endif %}
+										{% endif %}
+										
+									</div>
+									<div class="ec-productRole__btn">
+										<button type="submit" class="ec-blockBtn--action add-cart">
+											{{ 'カートに入れる'|trans }}
+										</button>
+									</div>
+								{% else %}
+									<div class="ec-productRole__btn">
+										<button type="button" class="ec-blockBtn--action" disabled="disabled">
+											{{ 'ただいま品切れ中です。'|trans }}
+										</button>
+									</div>
+								{% endif %}
 
-							{{ form_rest(form) }}
-						</form>
+								{{ form_rest(form) }}
+							</form>
 						<div class="ec-modal">
 							<div class="ec-modal-overlay">
 								<div class="ec-modal-wrap">
@@ -378,11 +483,9 @@ file that was distributed with this source code.
 								</div>
 							</form>
 						{% endif %}
-						<div class="ec-productRole__description">{{ Product.description_detail|raw|nl2br }}
 						</div>
 					</div>
 				</div>
-			</div>
 			<div class="first-ranking-box">
 				<div class="first-ranking-img">
 					<div class="product-details-table">
@@ -453,20 +556,20 @@ file that was distributed with this source code.
 					<div class="details-banner"><img src="/html/user_data/assets/img/product/point-banner.png"/></div>
 					<div class="details-banner"><img src="/html/user_data/assets/img/product/yutube-banner.png"/></div>
 					<div class="details-share">
-						<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"/></a>
-						<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"/></a>
-						<a href="##"><img src="./html/user_data/assets/img/common/icon_Line.svg"/></a>
+						<a href="##"><img src="/html/user_data/assets/img/common/icon_Twitter.svg"/></a>
+						<a href="##"><img src="/html/user_data/assets/img/common/icon_Twitter.svg"/></a>
+						<a href="##"><img src="/html/user_data/assets/img/common/icon_Line.svg"/></a>
 					</div>
 				</div>
 			</div>
 			<div class="product-details-content">
 				<div class="footer-content-title details-content-title">
-					<img src="./html/user_data/assets/img/common/logo_footer.png">
+					<img src="/html/user_data/assets/img/common/logo_footer.png">
 					<h3>北海道海鮮しゃぶしゃぶ　「雅-MIYABI-」　セット内容</h3>
 				</div>
 				<div class="details-banner"><img src="/html/user_data/assets/img/product/product-banner01.jpg"/></div>
 				<div class="footer-content-title details-content-title">
-					<img src="./html/user_data/assets/img/common/logo_footer.png">
+					<img src="/html/user_data/assets/img/common/logo_footer.png">
 					<h3>お召し上がり方/アレンジレシピ</h3>
 				</div>
 				<div class="arrange-recipe-list">
@@ -501,9 +604,9 @@ file that was distributed with this source code.
 					<div class="choice-r">
 						<div class="details-banner"><img src="/html/user_data/assets/img/product/yutube-banner.png"></div>
 						<div class="details-share">
-							<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"></a>
-							<a href="##"><img src="./html/user_data/assets/img/common/icon_Twitter.svg"></a>
-							<a href="##"><img src="./html/user_data/assets/img/common/icon_Line.svg"></a>
+							<a href="##"><img src="/html/user_data/assets/img/common/icon_Twitter.svg"></a>
+							<a href="##"><img src="/html/user_data/assets/img/common/icon_Twitter.svg"></a>
+							<a href="##"><img src="/html/user_data/assets/img/common/icon_Line.svg"></a>
 						</div>
 					</div>
 				</div>
@@ -537,17 +640,17 @@ file that was distributed with this source code.
 			</div>
 			<div class="home-gift">
                 <div class="inner">
-                    <div class="gift-banner"><a href="##"><img src="./html/user_data/assets/img/common/gift-bannner.jpg"></a></div>
+                    <div class="gift-banner"><a href="##"><img src="/html/user_data/assets/img/common/gift-bannner.jpg"></a></div>
                     <div class="gift-box pc">
                         <h3>ギフトサービスについて</h3>
                         <p>GOURMET RESORT（グルメリゾート）では誕生日、記念日、御祝や御礼など、<span>大切な方へ心のこもったおくりもの</span>へのオプションとしてラッピングや花束ブーケの同梱サービスをご用意しております。</p>
-                        <div class="gift-link"><a href="##">詳細はこちら<img src="./html/user_data/assets/img/common/icon_link.png"></a></div>
+                        <div class="gift-link"><a href="##">詳細はこちら<img src="/html/user_data/assets/img/common/icon_link.png"></a></div>
                     </div>
                 </div>
             </div>
 			<div class="product-vioce">
 				<div class="product-title text-center"><h3>ご購入いただいたお客様の声</h3></div>
-				<div class="first-ranking-star product-vioce-star"><span>レビュー評価</span><img src="./html/user_data/assets/img/home/star4.6.png"><span>星5つ中の4.6</span></div>
+				<div class="first-ranking-star product-vioce-star"><span>レビュー評価</span><img src="/html/user_data/assets/img/home/star4.6.png"><span>星5つ中の4.6</span></div>
 				<div class="product-vioce-list">
 					<div class="product-vioce-item">
 						<div class="vioce-person">
@@ -596,17 +699,21 @@ file that was distributed with this source code.
 				</div>
 			</div>
 			<div class="dishes-together">
-				<div class="product-title"><h3>一緒に購入されている料理</h3></div>
+				<div class="product-title"><h3>一緒に購 入されている料理</h3></div>
 				<div class="dishes-together-box">
 					<div class="dishes-together-list">
+					{% if WithBuyProducts|length > 0 %}
+						{% for WithBuyProduct in WithBuyProducts %}
 						<div class="dishes-together-item">
-							<div class="dishes-together-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
+							<div class="dishes-together-img"><img src="{{ asset(WithBuyProduct.mainFileName|no_image_product, 'save_image') }}" /></div>
 							<div class="dishes-together-text">
-								<h5>北海道海鮮<br/>しゃぶしゃぶ-雅-</h5>
-								<p class="dishes-together-price">33,000円(税込)</p>
+								<h5>{{ WithBuyProduct.name}}</h5>
+								<p class="dishes-together-price">{{ WithBuyProduct.price02_min | number_format }}円 </del></span>（税込）)</p>
 							</div>
 						</div>
-						<div class="dishes-together-item">
+						{% endfor %}
+					{% endif %}
+						<!-- <div class="dishes-together-item">
 							<div class="dishes-together-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
 							<div class="dishes-together-text">
 								<h5>ホタテの釜飯</h5>
@@ -619,25 +726,44 @@ file that was distributed with this source code.
 								<h5>北海道<br/>スモーク牛タン</h5>
 								<p class="dishes-together-price">6,000円(税込)</p>
 							</div>
-						</div>
+						</div> -->
 					</div>
 					<div class="dishes-together-totalprice">
-						<p>３点すべて購入：<span>￥47,000(税込)</span></p>
+						<p>３点すべて購入：<span>{{ WithBuyTotalPrice| number_format }}円 </del></span>（税込）</span></p>
 					</div>
 				</div>
 			</div>
 			<div class="here-too">
 				<div class="product-title"><h3>こちらもおすすめ</h3></div>
 				<div class="here-too-list">
-					<div class="here-too-item">
-						<div class="here-too-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
-						<div class="here-too-text">
-							<h5>伊勢海老とタラバガニの<br/>　　　　　　チリソース</h5>
-							<img class="here-too-star" src="/html/user_data/assets/img/product/5star.png">
-							<p class="here-too-price">￥5,400(税込)</p>
+					{% for recommandProductFields in FirstRecommandProducts %}
+						{% set recommandProduct = repository('Eccube\\Entity\\Product').getFirstProduct(recommandProductFields.targetId) %}
+						{% set recommendCustomField = repository('Plugin\\TabaCustomFields\\Entity\\CustomFieldsContents').getFields(recommandProduct.id) %}
+						{% set recommend_float_avg_star = recommendCustomField.plg_field_content7 %}
+						
+						<div class="here-too-item">
+							<div class="here-too-img"><img src="{{ asset(recommandProduct.mainFileName|no_image_product, 'save_image') }}" /></div>
+							<div class="here-too-text">
+								<h5>{{ recommandProduct.name}}</h5>
+								<!-- <img class="here-too-star" src="/html/user_data/assets/img/product/5star.png"> -->
+								<div class="Stars_reco" style="--rating: 5; font-size: 18px; display: flex;
+								" aria-label="Rating of this product is 2.3 out of 5."></div>
+								<script>
+									$(function(){
+										$('.Stars_reco').each(function(i, obj) {
+										if(i == 1) {
+											var real_starValue = '{{ recommend_float_avg_star }}';
+											$('.Stars_reco').css('--rating', real_starValue);
+										}
+									});
+									})
+								</script>
+								<p class="here-too-price">{{ recommandProduct.price02_min | number_format }}円 </del></span>（税込）</p>
+							</div>
 						</div>
-					</div>
-					<div class="here-too-item">
+					{% endfor %}
+					
+					<!-- <div class="here-too-item">
 						<div class="here-too-img"><img src="/html/user_data/assets/img/product/cookbook-recipe-img.png"></div>
 						<div class="here-too-text">
 							<h5>まるごと伊勢海老の<br/>　　海老味噌らーめん</h5>
@@ -660,7 +786,7 @@ file that was distributed with this source code.
 							<img class="here-too-star" src="/html/user_data/assets/img/product/5star.png">
 							<p class="here-too-price">￥5,400(税込)</p>
 						</div>
-					</div>
+					</div> -->
 				</div>
 			</div>
 			<div class="product-ranking">
@@ -668,7 +794,31 @@ file that was distributed with this source code.
 					<div class="product-ranking-item">
 						<h5 class="product-ranking-title">今月のランキング</h5>
 						<div class="product-ranking-month">
-							<div class="product-ranking-month-item product-ranking-month-item1">
+						{% set count = 0 %}
+						{% for rankProductFields in RankProducts %}
+							{% set rankProduct = repository('Eccube\\Entity\\Product').getFirstProduct(rankProductFields.targetId) %}
+								{% if count < 3 %}
+								<div class="product-ranking-month-item product-ranking-month-item1">
+									<a href="{{ url('product_list') }}?rank_id={{  rankProductFields.plgFieldContent1 }}">
+										{% if count == 0 %}
+										<img src="/html/user_data/assets/img/product/gold.png"/>
+										{% endif %}
+										{% if count == 1 %}
+										<img src="/html/user_data/assets/img/product/silver.png"/>
+										{% endif %}
+										{% if count == 2 %}
+										<img src="/html/user_data/assets/img/product/copper.png"/>
+										{% endif %}
+										
+										<span>{{ rankProductFields.plgFieldContent1 }}</span>
+										<p>{{rankProduct}}</p>
+									</a>
+								</div>
+								{% endif %}
+							{% set count = count + 1 %}
+						{% endfor %}
+
+							<!-- <div class="product-ranking-month-item product-ranking-month-item1">
 								<a href="##">
 									<img src="/html/user_data/assets/img/product/gold.png"/>
 									<span>1</span>
@@ -688,7 +838,7 @@ file that was distributed with this source code.
 									<span>3</span>
 									<p>毛蟹まるごと一杯あんかけチャーハン</p>
 								</a>
-							</div>
+							</div> -->
 						</div>
 					</div>
 					<div class="product-ranking-item">
@@ -719,14 +869,14 @@ file that was distributed with this source code.
 		</div>
 	
 		
-		{% if Product.freearea %}
+		<!-- {% if Product.freearea %}
 			 <div class="ec-productRole__description">
 				 {{ include(template_from_string(Product.freearea)) }}
 			</div>
-		{% endif %}
+		{% endif %} -->
 
 
-		{% if TabaCustomFieldsProduct('deliverydate', Product.id) %}
+		<!-- {% if TabaCustomFieldsProduct('deliverydate', Product.id) %}
 		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('deliverydate', Product.id)|raw }}</p>
 		{% endif %}
 		{% if TabaCustomFieldsProduct('ranking', Product.id) %}
@@ -743,6 +893,14 @@ file that was distributed with this source code.
 		{% endif %}
 		{% if TabaCustomFieldsProduct('youtube', Product.id) %}
 		<p class="ec-productRole__description">{{ TabaCustomFieldsProduct('youtube', Product.id)|raw }}</p>
-		{% endif %}
+		{% endif %} -->
 	</div>
+	<script>
+		$(function(){
+			$(".ec-numberInput:last").prependTo(".ec-productRole__actions");
+			$('#product_review_area').hide()
+		})
+
+	</script>
+	
 {% endblock %}

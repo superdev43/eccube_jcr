@@ -26,6 +26,7 @@ use Eccube\Form\Type\Master\ProductListOrderByType;
 use Eccube\Form\Type\SearchProductType;
 use Eccube\Repository\BaseInfoRepository;
 use Eccube\Repository\CustomerFavoriteProductRepository;
+use Eccube\Repository\ProductCategoryRepository;
 use Eccube\Repository\Master\ProductListMaxRepository;
 use Eccube\Repository\ProductRepository;
 use Eccube\Service\CartService;
@@ -50,6 +51,11 @@ class ProductController extends \Eccube\Controller\AbstractController
      * @var PurchaseFlow
      */
     protected $purchaseFlow;
+
+    /**
+     * @var ProductCategoryRepository
+     */
+    protected $productCategoryRepository;
 
     /**
      * @var CustomerFavoriteProductRepository
@@ -93,6 +99,7 @@ class ProductController extends \Eccube\Controller\AbstractController
      * @param BaseInfoRepository $baseInfoRepository
      * @param AuthenticationUtils $helper
      * @param ProductListMaxRepository $productListMaxRepository
+     * @param ProductCategoryRepository $productCategoryRepository
      */
     public function __construct(
         PurchaseFlow $cartPurchaseFlow,
@@ -101,7 +108,8 @@ class ProductController extends \Eccube\Controller\AbstractController
         ProductRepository $productRepository,
         BaseInfoRepository $baseInfoRepository,
         AuthenticationUtils $helper,
-        ProductListMaxRepository $productListMaxRepository
+        ProductListMaxRepository $productListMaxRepository,
+        ProductCategoryRepository $productCategoryRepository
     ) {
         $this->purchaseFlow = $cartPurchaseFlow;
         $this->customerFavoriteProductRepository = $customerFavoriteProductRepository;
@@ -110,6 +118,7 @@ class ProductController extends \Eccube\Controller\AbstractController
         $this->BaseInfo = $baseInfoRepository->get();
         $this->helper = $helper;
         $this->productListMaxRepository = $productListMaxRepository;
+        $this->productCategoryRepository = $productCategoryRepository;
     }
 
     /**
@@ -121,7 +130,7 @@ class ProductController extends \Eccube\Controller\AbstractController
     public function index(Request $request, Paginator $paginator)
     {
         // Doctrine SQLFilter
-        
+
         $flag = 0;
 
         if ($this->BaseInfo->isOptionNostockHidden()) {
@@ -159,15 +168,15 @@ class ProductController extends \Eccube\Controller\AbstractController
         $qb = $this->productRepository->getQueryBuilderBySearchData($searchData);
 
         // var_export($searchForm->get('category_id')->getData()->getId());die;
-         if(isset($_GET['oharimono']) && $_GET['oharimono'] != '') {
-             $flag ++;
-            $con_string = '%'.$_GET['oharimono'].'%';
+        if (isset($_GET['oharimono']) && $_GET['oharimono'] != '') {
+            $flag++;
+            $con_string = '%' . $_GET['oharimono'] . '%';
 
             $qb->innerJoin(CustomFieldsContents::class, 'cfc', Join::WITH, 'p.id = cfc.targetId')
-            // ->andwhere('cfc.entity = :entity')
-            // ->setParameter('entity', 'product')
-            ->andwhere('cfc.plgFieldContent11 like :oharimono')
-            ->setParameter('oharimono', $con_string);
+                // ->andwhere('cfc.entity = :entity')
+                // ->setParameter('entity', 'product')
+                ->andwhere('cfc.plgFieldContent11 like :oharimono')
+                ->setParameter('oharimono', $con_string);
         }
 
         // if(isset($_GET['tag']) && isset($_GET['oharimono']) && isset($_GET['price_range'])){
@@ -178,64 +187,59 @@ class ProductController extends \Eccube\Controller\AbstractController
         //     ->andWhere('pcl.price02 <= :high_price ')->setParameter('high_price', $high_price);
         // } 
 
-        if(isset($_GET['tag'])) {
+        if (isset($_GET['tag'])) {
             $qb->innerJoin(ProductTag::class, 'pt', Join::WITH, 'p.id = pt.Product')
-            ->innerJoin(Tag::class, 't', Join::WITH, 'pt.Tag = t.id')
-            ->andWhere('t.id = :tag_id')
-            ->setParameter('tag_id',$_GET['tag']);       
+                ->innerJoin(Tag::class, 't', Join::WITH, 'pt.Tag = t.id')
+                ->andWhere('t.id = :tag_id')
+                ->setParameter('tag_id', $_GET['tag']);
         }
 
-        if(isset($_GET['price_range']) && $_GET['price_range'] != '') {
-            if($flag > 0) {
+        if (isset($_GET['price_range']) && $_GET['price_range'] != '') {
+            if ($flag > 0) {
                 $qb->andWhere('cfc.plgFieldContent3 = :price_range')
-                ->setParameter('price_range',$_GET['price_range']);   
-            }
-            else {
+                    ->setParameter('price_range', $_GET['price_range']);
+            } else {
                 $qb->innerJoin(CustomFieldsContents::class, 'cfc', Join::WITH, 'p.id = cfc.targetId')
-                ->andWhere('cfc.plgFieldContent3 = :price_range')
-                ->setParameter('price_range',$_GET['price_range']);   
+                    ->andWhere('cfc.plgFieldContent3 = :price_range')
+                    ->setParameter('price_range', $_GET['price_range']);
             }
             // ->where('cfc.entity = :entity')
             // ->setParameter('entity', 'product')
-                
+
         }
 
-        
-        if(isset($_GET['rank_id']) && $_GET['rank_id'] != '') {
-            if($flag > 0) {
+
+        if (isset($_GET['rank_id']) && $_GET['rank_id'] != '') {
+            if ($flag > 0) {
                 $qb->andwhere('cfc.plgFieldContent1 = :rank_id')
-                ->setParameter('rank_id',$_GET['rank_id']);                   
-            }
-            else {
+                    ->setParameter('rank_id', $_GET['rank_id']);
+            } else {
                 $qb->innerJoin(CustomFieldsContents::class, 'cfc', Join::WITH, 'p.id = cfc.targetId')
-                // ->where('cfc.entity = :entity')
-                // ->setParameter('entity', 'product')
-                ->andwhere('cfc.plgFieldContent1 = :rank_id')
-                ->setParameter('rank_id',$_GET['rank_id']); 
+                    // ->where('cfc.entity = :entity')
+                    // ->setParameter('entity', 'product')
+                    ->andwhere('cfc.plgFieldContent1 = :rank_id')
+                    ->setParameter('rank_id', $_GET['rank_id']);
             }
-      
         }
 
-        if(isset($_GET['recommand_id']) && $_GET['recommand_id'] != '') {
-            if($flag > 0){
+        if (isset($_GET['recommand_id']) && $_GET['recommand_id'] != '') {
+            if ($flag > 0) {
                 $qb->andwhere('cfc.plgFieldContent8 = :recommand_id')
-                ->setParameter('recommand_id',$_GET['recommand_id']);                  
-            }
-            else {
+                    ->setParameter('recommand_id', $_GET['recommand_id']);
+            } else {
                 $qb->innerJoin(CustomFieldsContents::class, 'cfc', Join::WITH, 'p.id = cfc.targetId')
-                // ->where('cfc.entity = :entity')
-                // ->setParameter('entity', 'product')
-                ->andwhere('cfc.plgFieldContent8 = :recommand_id')
-                ->setParameter('recommand_id',$_GET['recommand_id']);   
+                    // ->where('cfc.entity = :entity')
+                    // ->setParameter('entity', 'product')
+                    ->andwhere('cfc.plgFieldContent8 = :recommand_id')
+                    ->setParameter('recommand_id', $_GET['recommand_id']);
             }
-    
         }
         // ini_set('memory_limit', '-1');
-//         var_export($_GET['oharimono']);
-//         $aa = unserialize('a:3:{i:0;s:6:"お花";i:1;s:15:"ラッピング";i:2;s:24:"メッセージカード";}');
-// var_export($aa);
+        //         var_export($_GET['oharimono']);
+        //         $aa = unserialize('a:3:{i:0;s:6:"お花";i:1;s:15:"ラッピング";i:2;s:24:"メッセージカード";}');
+        // var_export($aa);
 
-       
+
         $event = new EventArgs(
             [
                 'searchData' => $searchData,
@@ -255,7 +259,7 @@ class ProductController extends \Eccube\Controller\AbstractController
             !empty($searchData['pageno']) ? $searchData['pageno'] : 1,
             !empty($searchData['disp_number']) ? $searchData['disp_number']->getId() : $this->productListMaxRepository->findOneBy([], ['sort_no' => 'ASC'])->getId()
         );
-// var_export($searchData['disp_number']->getId()); 
+        // var_export($searchData['disp_number']->getId()); 
         $ids = [];
         foreach ($pagination as $Product) {
             $ids[] = $Product->getId();
@@ -335,7 +339,7 @@ class ProductController extends \Eccube\Controller\AbstractController
 
         $Category = $searchForm->get('category_id')->getData();
 
-    
+
 
         return [
             'subtitle' => $this->getPageTitle($searchData),
@@ -358,9 +362,9 @@ class ProductController extends \Eccube\Controller\AbstractController
     public function search_data(Request $request, Paginator $paginator)
     {
         // Doctrine SQLFilter
-        
-     
-        
+
+
+
         if ($this->BaseInfo->isOptionNostockHidden()) {
             $this->entityManager->getFilters()->enable('option_nostock_hidden');
         }
@@ -547,12 +551,40 @@ class ProductController extends \Eccube\Controller\AbstractController
             $is_favorite = $this->customerFavoriteProductRepository->isFavorite($Customer, $Product);
         }
 
+        $ProductCategories = $Product->getProductCategories();
+
+        $withBuyProductids = $this->productCategoryRepository->findBy([
+            'Category' => $ProductCategories[0]->getCategoryId()
+        ]);
+        $preWithBuyProducts = array_map(function ($dd) {
+            return $dd->getProduct();
+        }, $withBuyProductids);
+
+        $withBuyProducts = [];
+        $count = 0;
+        foreach($preWithBuyProducts as $preWithBuyProduct){
+            
+            if($preWithBuyProduct->getId() != $Product->getId()){
+                if($count<3){
+
+                    $withBuyProducts[] = $preWithBuyProduct; 
+                }
+                $count++;
+            }
+        }
+        $withBuyPrice = 0;
+        foreach($withBuyProducts as $pro){
+            $withBuyPrice += $pro->getPrice02Min();
+        };
+
         return [
             'title' => $this->title,
             'subtitle' => $Product->getName(),
             'form' => $builder->getForm()->createView(),
             'Product' => $Product,
             'is_favorite' => $is_favorite,
+            'WithBuyProducts' => $withBuyProducts,
+            'WithBuyTotalPrice' => $withBuyPrice
         ];
     }
 
