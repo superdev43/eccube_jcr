@@ -705,9 +705,9 @@ file that was distributed with this source code.
 					{% if WithBuyProducts|length > 0 %}
 						{% for WithBuyProduct in WithBuyProducts %}
 						<div class="dishes-together-item">
-							<div class="dishes-together-img"><img src="{{ asset(WithBuyProduct.mainFileName|no_image_product, 'save_image') }}" /></div>
+							<div class="dishes-together-img"><a href="{{ url('product_detail', { id: WithBuyProduct.id }) }}"><img src="{{ asset(WithBuyProduct.mainFileName|no_image_product, 'save_image') }}" /></a></div>
 							<div class="dishes-together-text">
-								<h5>{{ WithBuyProduct.name}}</h5>
+							<a href="{{ url('product_detail', { id: WithBuyProduct.id }) }}"><h5>{{ WithBuyProduct.name}}</h5></a>
 								<p class="dishes-together-price">{{ WithBuyProduct.price02_min | number_format }}円 </del></span>（税込）)</p>
 							</div>
 						</div>
@@ -742,9 +742,9 @@ file that was distributed with this source code.
 						{% set recommend_float_avg_star = recommendCustomField.plg_field_content7 %}
 						
 						<div class="here-too-item">
-							<div class="here-too-img"><img src="{{ asset(recommandProduct.mainFileName|no_image_product, 'save_image') }}" /></div>
+							<div class="here-too-img"><a href="{{ url('product_detail', { id: recommandProduct.id }) }}"><img src="{{ asset(recommandProduct.mainFileName|no_image_product, 'save_image') }}" /></a></div>
 							<div class="here-too-text">
-								<h5>{{ recommandProduct.name}}</h5>
+							<a href="{{ url('product_detail', { id: recommandProduct.id }) }}"><h5>{{ recommandProduct.name}}</h5></a>
 								<!-- <img class="here-too-star" src="/html/user_data/assets/img/product/5star.png"> -->
 								<div class="Stars_reco" style="--rating: 5; font-size: 18px; display: flex;
 								" aria-label="Rating of this product is 2.3 out of 5."></div>
@@ -799,7 +799,7 @@ file that was distributed with this source code.
 							{% set rankProduct = repository('Eccube\\Entity\\Product').getFirstProduct(rankProductFields.targetId) %}
 								{% if count < 3 %}
 								<div class="product-ranking-month-item product-ranking-month-item1">
-									<a href="{{ url('product_list') }}?rank_id={{  rankProductFields.plgFieldContent1 }}">
+									<a href="{{ url('product_detail', { id: rankProduct.id }) }}">
 										{% if count == 0 %}
 										<img src="/html/user_data/assets/img/product/gold.png"/>
 										{% endif %}
