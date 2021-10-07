@@ -33,6 +33,7 @@ class ProductClassRepository extends AbstractRepository
     {
         $qb = $this->createQueryBuilder('pc')
             ->where('pc.Product = :Product')
+            ->andWhere('pc.visible = 1')
             ->setParameter('Product', $productId);
 
         $product = $qb
