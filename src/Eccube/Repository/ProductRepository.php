@@ -372,4 +372,12 @@ class ProductRepository extends AbstractRepository
 
         return $qb->getQuery()->getSingleResult();
     }
+
+    public function getTestFoodProducts(){
+        $qb = $this->createQueryBuilder('p')->orderBy('p.id', 'DESC')
+            ->innerJoin('Eccube\Entity\ProductCategory', 'ptc', 'WITH', 'ptc.Product = p.id')
+            ->where('ptc.Category = 22');
+
+        return $qb->getQuery()->getResult();
+    }
 }

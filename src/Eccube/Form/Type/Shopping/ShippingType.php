@@ -28,6 +28,7 @@ use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Plugin\TabaCustomFields\Repository\CustomFieldsContentsRepository;
 
 class ShippingType extends AbstractType
 {
@@ -35,6 +36,11 @@ class ShippingType extends AbstractType
      * @var EccubeConfig
      */
     protected $eccubeConfig;
+
+    /**
+     * @var CustomFieldsContentsRepository
+     */
+    protected $customFieldsContentsRepository;
 
     /**
      * @var DeliveryRepository
@@ -53,11 +59,12 @@ class ShippingType extends AbstractType
      * @param DeliveryRepository $deliveryRepository
      * @param DeliveryFeeRepository $deliveryFeeRepository
      */
-    public function __construct(EccubeConfig $eccubeConfig, DeliveryRepository $deliveryRepository, DeliveryFeeRepository $deliveryFeeRepository)
+    public function __construct(EccubeConfig $eccubeConfig, DeliveryRepository $deliveryRepository, DeliveryFeeRepository $deliveryFeeRepository, CustomFieldsContentsRepository $customFieldsContentsRepository)
     {
         $this->eccubeConfig = $eccubeConfig;
         $this->deliveryRepository = $deliveryRepository;
         $this->deliveryFeeRepository = $deliveryFeeRepository;
+        $this->customFieldsContentsRepository = $customFieldsContentsRepository;
     }
 
     /**
@@ -158,9 +165,9 @@ class ShippingType extends AbstractType
                 // 配送日数が設定されている
                 if ($deliveryDurationFlag) {
                     $period = new \DatePeriod(
-                        new \DateTime($minDate.' day'),
+                        new \DateTime($minDate . ' day'),
                         new \DateInterval('P1D'),
-                        new \DateTime($minDate + $this->eccubeConfig['eccube_deliv_date_end_max'].' day')
+                        new \DateTime($minDate + $this->eccubeConfig['eccube_deliv_date_end_max'] . ' day')
                     );
 
                     // 曜日設定用
@@ -174,9 +181,33 @@ class ShippingType extends AbstractType
                     );
 
                     foreach ($period as $day) {
-                        $deliveryDurations[$day->format('Y/m/d')] = $day->format('Y/m/d').'('.$dateFormatter->format($day).')';
+                        $deliveryDurations[$day->format('Y/m/d')] = $day->format('Y/m/d') . '(' . $dateFormatter->format($day) . ')';
                     }
                 }
+
+                $OrderItems = $Shipping->getProductOrderItems();
+
+                $delivery_dates = [];
+                foreach ($OrderItems as $detail) {
+                    $delivery_dates[] = $this->customFieldsContentsRepository->findOneBy([
+                        'entity' => 'product',
+                        'targetId' => $detail->getProduct()->getId(),
+
+                    ])->getPlgFieldContent6();
+                }
+
+                $max_deli_days = max($delivery_dates);
+
+
+                $days = array('Sunday' => '日', 'Monday' => '月', 'Tuesday' => '火', 'Wednesday' => '水', 'Thursday' => '木', 'Friday' => '金', 'Saturday' => '土');
+                $real_dates = [];
+                for ($i = 0; $i < 20; $i++) {
+                    $d = Date('Y/m/d', strtotime('+' . ($max_deli_days + $i) . ' days'));
+                    $dd = new \DateTime($d);
+                    $real_dates[$d . "(" . $days[$dd->format('l')]. ")"] = $d;
+                }
+
+
 
                 $form = $event->getForm();
                 $form
@@ -184,7 +215,7 @@ class ShippingType extends AbstractType
                         'shipping_delivery_date',
                         ChoiceType::class,
                         [
-                            'choices' => array_flip($deliveryDurations),
+                            'choices' => $real_dates,
                             'required' => false,
                             'placeholder' => 'common.select__unspecified',
                             'mapped' => false,
@@ -268,6 +299,8 @@ class ShippingType extends AbstractType
             }
         });
     }
+
+
 
     public function configureOptions(OptionsResolver $resolver)
     {
